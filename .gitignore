@@ -7,4 +7,4 @@ __pycache__/
 .venv/
 venv/
 .env
-reports/*.png
+reports/*.pngnode_modules/
