@@ -1,0 +1,50 @@
+{
+  "target": "example.com",
+  "target_ip": "93.184.216.34",
+  "dns": {
+    "resolved": true,
+    "outcome": null,
+    "error": null,
+    "duration_ms": 42.1,
+    "resolved_ip": "93.184.216.34"
+  },
+  "tcp": {
+    "443": { "status": "open", "duration_ms": 15.2 },
+    "80": { "status": "open", "duration_ms": 10.4 }
+  },
+  "tls": {
+    "handshake": "ok",
+    "duration_ms": 55.3
+  },
+  "http": {
+    "reachable": true,
+    "status": 200,
+    "duration_ms": 120.7
+  },
+  "hops": [
+    {
+      "hop": 1,
+      "ip": "10.0.0.1",
+      "rtt_ms": 2.1,
+      "packetLossPercent": 0,
+      "isDestination": false,
+      "error": null
+    },
+    {
+      "hop": 2,
+      "ip": "172.16.5.1",
+      "rtt_ms": 8.4,
+      "packetLossPercent": 0,
+      "isDestination": false,
+      "error": null
+    },
+    {
+      "hop": 3,
+      "ip": "93.184.216.34",
+      "rtt_ms": 24.7,
+      "packetLossPercent": 0,
+      "isDestination": true,
+      "error": null
+    }
+  ]
+}

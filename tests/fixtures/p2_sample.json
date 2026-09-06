@@ -1,0 +1,10 @@
+{
+  "baselineAvailable": true,
+  "pathChanged": false,
+  "timingCorrelated": null,
+  "rtt": {
+    "baseline_rtt_ms": 25.0,
+    "current_rtt_ms": 24.7,
+    "delta_ms": -0.3
+  }
+}
