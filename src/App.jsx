@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "./App.css";
+import NetworkVisualization from "./components/NetworkVisualisation";
 
 import {
   startInvestigation,
@@ -44,7 +45,8 @@ function App() {
 
     const interval = setInterval(() => {
       try {
-        const currentStatus = getInvestigationStatus(investigationId);
+        const currentStatus =
+          getInvestigationStatus(investigationId);
 
         setStage(currentStatus.stage);
 
@@ -96,13 +98,23 @@ function App() {
   );
 }
 
-function LaunchScreen({ target, setTarget, onInvestigate }) {
+/* =========================================================
+   LAUNCH SCREEN
+========================================================= */
+
+function LaunchScreen({
+  target,
+  setTarget,
+  onInvestigate,
+}) {
   return (
     <main className="launch-screen">
       <div className="launch-grid" />
 
       <div className="launch-content">
-        <div className="system-label">NETWORK INVESTIGATION SYSTEM</div>
+        <div className="system-label">
+          NETWORK INVESTIGATION SYSTEM
+        </div>
 
         <h1>BLACK BOX</h1>
 
@@ -117,7 +129,9 @@ function LaunchScreen({ target, setTarget, onInvestigate }) {
             <input
               type="text"
               value={target}
-              onChange={(event) => setTarget(event.target.value)}
+              onChange={(event) =>
+                setTarget(event.target.value)
+              }
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   onInvestigate();
@@ -126,7 +140,9 @@ function LaunchScreen({ target, setTarget, onInvestigate }) {
               placeholder="github.com"
             />
 
-            <button onClick={onInvestigate}>INVESTIGATE</button>
+            <button onClick={onInvestigate}>
+              INVESTIGATE
+            </button>
           </div>
         </div>
 
@@ -137,6 +153,10 @@ function LaunchScreen({ target, setTarget, onInvestigate }) {
     </main>
   );
 }
+
+/* =========================================================
+   INVESTIGATION CONSOLE
+========================================================= */
 
 function InvestigationConsole({
   target,
@@ -160,16 +180,29 @@ function InvestigationConsole({
 
   return (
     <main className="investigation-screen">
+
+      {/* TARGET BAR */}
       <header className="target-bar">
         <div>
-          <div className="system-label">BLACK BOX / INVESTIGATION</div>
-          <div className="target-name">{target}</div>
+          <div className="system-label">
+            BLACK BOX / INVESTIGATION
+          </div>
+
+          <div className="target-name">
+            {target}
+          </div>
         </div>
 
         <div className="target-status">
-          {result ? "INVESTIGATION COMPLETE" : "INVESTIGATION RUNNING"}
+          {result
+            ? "INVESTIGATION COMPLETE"
+            : "INVESTIGATION RUNNING"}
         </div>
       </header>
+
+      {/* =================================================
+          01 — INVESTIGATION PIPELINE
+      ================================================= */}
 
       <section className="progress-section">
         <div className="section-heading">
@@ -190,16 +223,26 @@ function InvestigationConsole({
             }
 
             return (
-              <div className={className} key={item}>
+              <div
+                className={className}
+                key={item}
+              >
                 <div className="pipeline-dot" />
+
                 <div className="pipeline-name">
-                  {item.replaceAll("_", " ").toUpperCase()}
+                  {item
+                    .replaceAll("_", " ")
+                    .toUpperCase()}
                 </div>
               </div>
             );
           })}
         </div>
       </section>
+
+      {/* =================================================
+          02 — INVESTIGATION STATUS
+      ================================================= */}
 
       <section className="result-preview">
         <div className="section-heading">
@@ -216,13 +259,15 @@ function InvestigationConsole({
 
             <div className="running-stage">
               {stage
-                ? stage.replaceAll("_", " ").toUpperCase()
+                ? stage
+                    .replaceAll("_", " ")
+                    .toUpperCase()
                 : "INITIALIZING"}
             </div>
 
             <p>
-              Collecting network information and analyzing the discovered
-              path.
+              Collecting network information and analyzing
+              the discovered path.
             </p>
           </div>
         ) : (
@@ -232,14 +277,19 @@ function InvestigationConsole({
             </div>
 
             <div className="completed-summary">
+
               <div>
                 <span>TARGET</span>
-                <strong>{result.target}</strong>
+                <strong>
+                  {result.target}
+                </strong>
               </div>
 
               <div>
                 <span>HTTP STATUS</span>
-                <strong>{result.http?.statusCode ?? "—"}</strong>
+                <strong>
+                  {result.http?.statusCode ?? "—"}
+                </strong>
               </div>
 
               <div>
@@ -255,10 +305,61 @@ function InvestigationConsole({
                   {result.diagnosis?.probableCause ?? "—"}
                 </strong>
               </div>
+
             </div>
           </div>
         )}
       </section>
+
+      {/* =================================================
+          NETWORK VISUALIZATION
+          THIS STAYS VISIBLE EVEN WHEN A HOP IS SELECTED
+      ================================================= */}
+
+      {result && (
+        <section className="visualization-section">
+
+          <div className="section-heading">
+            <span>03</span>
+            <h2>NETWORK VISUALIZATION</h2>
+          </div>
+
+          <p className="section-description">
+            Interactive three-dimensional representation of
+            the discovered network path.
+          </p>
+
+          <div className="network-visualization-wrapper">
+            <NetworkVisualization
+              path={result.currentPath || []}
+              selectedHop={selectedHop}
+              onSelectHop={setSelectedHop}
+            />
+          </div>
+
+        </section>
+      )}
+
+      {/* =================================================
+          PREVIOUS / BASELINE NETWORK
+      ================================================= */}
+
+      {result && (
+        <PreviousNetworkPath
+          path={
+            result.previousPath ||
+            result.baselinePath ||
+            result.previous?.path ||
+            result.pathComparison?.previousPath ||
+            []
+          }
+          currentPath={result.currentPath || []}
+        />
+      )}
+
+      {/* =================================================
+          CURRENT NETWORK PATH
+      ================================================= */}
 
       {result && (
         <>
@@ -268,19 +369,51 @@ function InvestigationConsole({
             onSelectHop={setSelectedHop}
           />
 
+          {/* =================================================
+              HOP DETAILS
+
+              IMPORTANT:
+              This is BELOW the network path.
+              Selecting a hop DOES NOT remove the path.
+          ================================================= */}
+
           {selectedHop && (
             <HopDetails hop={selectedHop} />
           )}
 
+          {/* =================================================
+              PATH COMPARISON
+          ================================================= */}
+
           <PathComparison result={result} />
+
+          {/* =================================================
+              PERFORMANCE ANALYSIS
+          ================================================= */}
 
           <PerformanceAnalysis result={result} />
 
+          {/* =================================================
+              ANOMALIES & EVIDENCE
+          ================================================= */}
+
           <EvidenceAnalysis result={result} />
+
+          {/* =================================================
+              DIAGNOSIS
+          ================================================= */}
 
           <DiagnosisAnalysis result={result} />
 
+          {/* =================================================
+              TIMELINE
+          ================================================= */}
+
           <InvestigationTimeline result={result} />
+
+          {/* =================================================
+              FINAL RESULT
+          ================================================= */}
 
           <FinalResult
             result={result}
@@ -294,47 +427,203 @@ function InvestigationConsole({
   );
 }
 
-function NetworkPath({ path, selectedHop, onSelectHop }) {
+/* =========================================================
+   PREVIOUS NETWORK PATH
+========================================================= */
+
+function PreviousNetworkPath({
+  path,
+  currentPath,
+}) {
+  /*
+    If no previous path exists, we don't show a fake
+    baseline.
+
+    This is important for the FIRST investigation.
+  */
+
+  if (!path || path.length === 0) {
+    return (
+      <section className="network-section previous-network-section">
+
+        <div className="section-heading">
+          <span>04</span>
+          <h2>PREVIOUS NETWORK PATH</h2>
+        </div>
+
+        <p className="section-description">
+          No previous network route is available for comparison.
+        </p>
+
+        <div className="empty-panel">
+          NO BASELINE NETWORK PATH AVAILABLE
+        </div>
+
+      </section>
+    );
+  }
+
+  return (
+    <section className="network-section previous-network-section">
+
+      <div className="section-heading">
+        <span>04</span>
+        <h2>PREVIOUS NETWORK PATH</h2>
+      </div>
+
+      <p className="section-description">
+        Baseline route captured before the current investigation.
+        This route is preserved for direct comparison.
+      </p>
+
+      <div className="path-label previous-path-label">
+        BASELINE / PREVIOUS ROUTE
+      </div>
+
+      <div className="path-container previous-path-container">
+
+        {path.map((hop, index) => {
+
+          const hopIp =
+            hop?.ip ||
+            hop?.address ||
+            hop?.host ||
+            "UNKNOWN";
+
+          const hopNumber =
+            hop?.hop ??
+            hop?.number ??
+            index + 1;
+
+          const rtt =
+            hop?.rtt ??
+            hop?.latency ??
+            "—";
+
+          const packetLoss =
+            hop?.packetLoss ??
+            hop?.loss ??
+            0;
+
+          return (
+            <div
+              className="path-node-wrapper"
+              key={`previous-${hopIp}-${index}`}
+            >
+
+              <div className="hop-card previous-hop">
+
+                <div className="hop-number">
+                  HOP {hopNumber}
+                </div>
+
+                <div className="hop-ip">
+                  {hopIp}
+                </div>
+
+                <div className="hop-meta">
+                  <span>
+                    {rtt} ms
+                  </span>
+
+                  <span>
+                    {packetLoss}% LOSS
+                  </span>
+                </div>
+
+                {hop.network && (
+                  <div className="hop-network">
+                    {hop.network}
+                  </div>
+                )}
+
+              </div>
+
+              {index < path.length - 1 && (
+                <div className="path-connector">
+                  <span />
+                </div>
+              )}
+
+            </div>
+          );
+        })}
+
+      </div>
+
+    </section>
+  );
+}
+
+/* =========================================================
+   CURRENT NETWORK PATH
+========================================================= */
+
+function NetworkPath({
+  path,
+  selectedHop,
+  onSelectHop,
+}) {
   if (!path || path.length === 0) {
     return (
       <section className="network-section">
+
         <div className="section-heading">
-          <span>06</span>
+          <span>05</span>
           <h2>NETWORK PATH</h2>
         </div>
 
         <div className="empty-panel">
           NO NETWORK PATH DATA AVAILABLE
         </div>
+
       </section>
     );
   }
 
   return (
     <section className="network-section">
+
       <div className="section-heading">
-        <span>06</span>
+        <span>05</span>
         <h2>DISCOVERED NETWORK PATH</h2>
       </div>
 
       <p className="section-description">
-        Select a hop to inspect the network information collected during
-        the investigation.
+        Select a hop to inspect the network information
+        collected during the investigation.
       </p>
 
+      <div className="path-label current-path-label">
+        CURRENT / DISCOVERED ROUTE
+      </div>
+
       <div className="path-container">
+
         {path.map((hop, index) => {
+
           const isSelected =
             selectedHop?.ip === hop.ip;
 
           return (
-            <div className="path-node-wrapper" key={`${hop.ip}-${index}`}>
+            <div
+              className="path-node-wrapper"
+              key={`${hop.ip}-${index}`}
+            >
+
               <button
                 className={`hop-card ${
                   isSelected ? "selected" : ""
-                } ${hop.status === "anomalous" ? "anomalous" : ""}`}
-                onClick={() => onSelectHop(hop)}
+                } ${
+                  hop.status === "anomalous"
+                    ? "anomalous"
+                    : ""
+                }`}
+                onClick={() =>
+                  onSelectHop(hop)
+                }
               >
+
                 <div className="hop-number">
                   HOP {hop.hop}
                 </div>
@@ -344,8 +633,15 @@ function NetworkPath({ path, selectedHop, onSelectHop }) {
                 </div>
 
                 <div className="hop-meta">
-                  <span>{hop.rtt} ms</span>
-                  <span>{hop.packetLoss}% LOSS</span>
+
+                  <span>
+                    {hop.rtt} ms
+                  </span>
+
+                  <span>
+                    {hop.packetLoss}% LOSS
+                  </span>
+
                 </div>
 
                 {hop.network && (
@@ -359,6 +655,7 @@ function NetworkPath({ path, selectedHop, onSelectHop }) {
                     ANOMALY DETECTED
                   </div>
                 )}
+
               </button>
 
               {index < path.length - 1 && (
@@ -366,138 +663,205 @@ function NetworkPath({ path, selectedHop, onSelectHop }) {
                   <span />
                 </div>
               )}
+
             </div>
           );
         })}
+
       </div>
+
     </section>
   );
 }
 
+/* =========================================================
+   HOP DETAILS
+========================================================= */
+
 function HopDetails({ hop }) {
   return (
     <section className="hop-details-section">
+
       <div className="section-heading">
-        <span>07</span>
+        <span>06</span>
         <h2>HOP INSPECTION</h2>
       </div>
 
       <div className="hop-details-panel">
+
         <div className="hop-details-header">
+
           <div>
             <span>HOP</span>
-            <strong>{hop.hop}</strong>
+            <strong>
+              {hop.hop}
+            </strong>
           </div>
 
           <div>
             <span>STATUS</span>
-            <strong>{hop.status?.toUpperCase() ?? "UNKNOWN"}</strong>
+            <strong>
+              {hop.status?.toUpperCase() ??
+                "UNKNOWN"}
+            </strong>
           </div>
+
         </div>
 
         <div className="hop-details-grid">
+
           <div>
             <span>IP ADDRESS</span>
-            <strong>{hop.ip}</strong>
+            <strong>
+              {hop.ip}
+            </strong>
           </div>
 
           <div>
             <span>ROUND TRIP TIME</span>
-            <strong>{hop.rtt} ms</strong>
+            <strong>
+              {hop.rtt} ms
+            </strong>
           </div>
 
           <div>
             <span>PACKET LOSS</span>
-            <strong>{hop.packetLoss}%</strong>
+            <strong>
+              {hop.packetLoss}%
+            </strong>
           </div>
 
           <div>
             <span>ASN</span>
-            <strong>{hop.asn ?? "—"}</strong>
+            <strong>
+              {hop.asn ?? "—"}
+            </strong>
           </div>
 
           <div>
             <span>NETWORK</span>
-            <strong>{hop.network ?? "—"}</strong>
+            <strong>
+              {hop.network ?? "—"}
+            </strong>
           </div>
+
         </div>
 
         {hop.anomaly && (
           <div className="hop-anomaly">
+
             <div className="hop-anomaly-title">
               {hop.anomaly.type}
             </div>
 
             {hop.anomaly.severity && (
               <div className="hop-anomaly-severity">
-                SEVERITY: {hop.anomaly.severity.toUpperCase()}
+                SEVERITY:{" "}
+                {hop.anomaly.severity.toUpperCase()}
               </div>
             )}
+
           </div>
         )}
 
-        {hop.evidence && hop.evidence.length > 0 && (
-          <div className="hop-evidence">
-            <div className="hop-evidence-title">
-              EVIDENCE
-            </div>
+        {hop.evidence &&
+          hop.evidence.length > 0 && (
+            <div className="hop-evidence">
 
-            {hop.evidence.map((item, index) => (
-              <div className="hop-evidence-item" key={index}>
-                <span>✓</span>
-                {item}
+              <div className="hop-evidence-title">
+                EVIDENCE
               </div>
-            ))}
-          </div>
-        )}
+
+              {hop.evidence.map(
+                (item, index) => (
+                  <div
+                    className="hop-evidence-item"
+                    key={index}
+                  >
+                    <span>✓</span>
+                    {item}
+                  </div>
+                )
+              )}
+
+            </div>
+          )}
+
       </div>
+
     </section>
   );
 }
 
+/* =========================================================
+   PATH COMPARISON
+========================================================= */
+
 function PathComparison({ result }) {
-  const comparison = result.pathComparison;
+  const comparison =
+    result.pathComparison;
 
   return (
     <section className="analysis-section">
+
       <div className="analysis-header">
+
         <div>
+
           <div className="section-heading">
-            <span>03</span>
+            <span>07</span>
             <h2>PATH COMPARISON</h2>
           </div>
 
           <p className="section-description">
-            Comparing the discovered route against the available baseline.
+            Comparing the discovered route against
+            the available baseline.
           </p>
+
         </div>
 
         <div className="analysis-status">
-          {comparison?.status === "no_baseline"
+
+          {comparison?.status ===
+          "no_baseline"
             ? "NO BASELINE"
             : comparison?.status ===
               "path_change_with_performance_impact"
             ? "PATH CHANGED"
             : "ANALYZED"}
+
         </div>
+
       </div>
 
-      {!comparison || comparison.status === "no_baseline" ? (
+      {!comparison ||
+      comparison.status ===
+        "no_baseline" ? (
+
         <div className="analysis-empty">
-          <h3>NO BASELINE AVAILABLE</h3>
+
+          <h3>
+            NO BASELINE AVAILABLE
+          </h3>
 
           <p>
-            A previous route is not available for this investigation,
-            so path-change analysis cannot be performed.
+            A previous route is not available
+            for this investigation, so path-change
+            analysis cannot be performed.
           </p>
+
         </div>
+
       ) : (
+
         <div className="comparison-panel">
+
           <div className="comparison-message">
             {comparison.message}
           </div>
 
           <div className="comparison-grid">
+
             <div>
               <span>DIVERGENCE POINT</span>
               <strong>
@@ -525,129 +889,203 @@ function PathComparison({ result }) {
                 {comparison.commonHops?.length ?? 0}
               </strong>
             </div>
+
           </div>
 
           <div className="route-changes">
+
             <div className="route-column">
+
               <div className="route-column-title">
                 REMOVED
               </div>
 
-              {comparison.removedHops?.map((hop, index) => (
-                <div className="route-hop removed" key={index}>
-                  {hop}
-                </div>
-              ))}
+              {comparison.removedHops?.map(
+                (hop, index) => (
+                  <div
+                    className="route-hop removed"
+                    key={index}
+                  >
+                    {hop}
+                  </div>
+                )
+              )}
+
             </div>
 
             <div className="route-column">
+
               <div className="route-column-title">
                 ADDED
               </div>
 
-              {comparison.addedHops?.map((hop, index) => (
-                <div className="route-hop added" key={index}>
-                  {hop}
-                </div>
-              ))}
+              {comparison.addedHops?.map(
+                (hop, index) => (
+                  <div
+                    className="route-hop added"
+                    key={index}
+                  >
+                    {hop}
+                  </div>
+                )
+              )}
+
             </div>
+
           </div>
+
         </div>
       )}
     </section>
   );
 }
 
+/* =========================================================
+   PERFORMANCE ANALYSIS
+========================================================= */
+
 function PerformanceAnalysis({ result }) {
-  const comparison = result.performanceComparison;
+  const comparison =
+    result.performanceComparison;
 
   return (
     <section className="analysis-section">
+
       <div className="analysis-header">
+
         <div>
+
           <div className="section-heading">
-            <span>04</span>
+            <span>08</span>
             <h2>PERFORMANCE ANALYSIS</h2>
           </div>
 
           <p className="section-description">
-            Comparing current network performance against the available
-            baseline.
+            Comparing current network performance
+            against the available baseline.
           </p>
+
         </div>
 
         {comparison && (
           <div className="analysis-status">
-            {comparison.status?.replaceAll("_", " ").toUpperCase()}
+            {comparison.status
+              ?.replaceAll("_", " ")
+              .toUpperCase()}
           </div>
         )}
+
       </div>
 
       {!comparison ? (
+
         <div className="analysis-empty">
-          <h3>NO PERFORMANCE BASELINE AVAILABLE</h3>
+
+          <h3>
+            NO PERFORMANCE BASELINE AVAILABLE
+          </h3>
 
           <p>
-            This investigation does not contain a previous performance
-            measurement. Current performance can be observed, but
-            degradation cannot be quantified against a baseline.
+            This investigation does not contain
+            a previous performance measurement.
           </p>
+
         </div>
+
       ) : (
+
         <div className="performance-panel">
+
           <div className="performance-grid">
+
             <PerformanceMetric
               label="ROUND TRIP TIME"
-              previous={comparison.previous.rtt}
-              current={comparison.current.rtt}
-              difference={comparison.difference.rtt}
+              previous={
+                comparison.previous.rtt
+              }
+              current={
+                comparison.current.rtt
+              }
+              difference={
+                comparison.difference.rtt
+              }
               unit="ms"
             />
 
             <PerformanceMetric
               label="PACKET LOSS"
-              previous={comparison.previous.packetLoss}
-              current={comparison.current.packetLoss}
-              difference={comparison.difference.packetLoss}
+              previous={
+                comparison.previous.packetLoss
+              }
+              current={
+                comparison.current.packetLoss
+              }
+              difference={
+                comparison.difference.packetLoss
+              }
               unit="%"
             />
 
             <PerformanceMetric
               label="HTTP RESPONSE TIME"
-              previous={comparison.previous.httpResponseTime}
-              current={comparison.current.httpResponseTime}
-              difference={comparison.difference.httpResponseTime}
+              previous={
+                comparison.previous.httpResponseTime
+              }
+              current={
+                comparison.current.httpResponseTime
+              }
+              difference={
+                comparison.difference.httpResponseTime
+              }
               unit="ms"
             />
 
             <div className="performance-metric">
+
               <span>HTTP STATUS</span>
 
               <div className="metric-values">
+
                 <strong>
-                  {comparison.previous.httpStatusCode}
+                  {
+                    comparison.previous
+                      .httpStatusCode
+                  }
                 </strong>
 
                 <span>→</span>
 
                 <strong>
-                  {comparison.current.httpStatusCode}
+                  {
+                    comparison.current
+                      .httpStatusCode
+                  }
                 </strong>
+
               </div>
+
             </div>
+
           </div>
 
           <div className="performance-finding">
-            <span>INVESTIGATION FINDING</span>
+
+            <span>
+              INVESTIGATION FINDING
+            </span>
 
             <strong>
-              {comparison.status === "degraded"
+              {comparison.status ===
+              "degraded"
                 ? "NETWORK PERFORMANCE DEGRADATION DETECTED"
                 : "NO SIGNIFICANT PERFORMANCE DEGRADATION"}
             </strong>
+
           </div>
+
         </div>
       )}
+
     </section>
   );
 }
@@ -661,14 +1099,18 @@ function PerformanceMetric({
 }) {
   const percentage =
     previous !== 0
-      ? Math.round((difference / previous) * 100)
+      ? Math.round(
+          (difference / previous) * 100
+        )
       : 0;
 
   return (
     <div className="performance-metric">
+
       <span>{label}</span>
 
       <div className="metric-values">
+
         <strong>
           {previous}
           {unit}
@@ -680,200 +1122,253 @@ function PerformanceMetric({
           {current}
           {unit}
         </strong>
+
       </div>
 
       <div className="metric-difference">
+
         +{difference}
         {unit}
 
         {percentage !== 0 && (
-          <span> (+{percentage}%)</span>
+          <span>
+            {" "}
+            (+{percentage}%)
+          </span>
         )}
+
       </div>
+
     </div>
   );
 }
 
+/* =========================================================
+   EVIDENCE
+========================================================= */
+
 function EvidenceAnalysis({ result }) {
-  const anomalies = result.anomalies || [];
-  const evidence = result.evidence || [];
+  const anomalies =
+    result.anomalies || [];
+
+  const evidence =
+    result.evidence || [];
 
   return (
     <section className="evidence-section">
+
       <div className="section-heading">
-        <span>05</span>
+        <span>09</span>
         <h2>ANOMALIES & EVIDENCE</h2>
       </div>
 
       <p className="section-description">
-        Detected anomalies and the evidence collected during the
-        investigation.
+        Detected anomalies and the evidence collected
+        during the investigation.
       </p>
 
       <div className="evidence-content">
+
         <div className="anomalies-block">
+
           <div className="evidence-subheading">
-            <span>ANOMALIES DETECTED</span>
+
+            <span>
+              ANOMALIES DETECTED
+            </span>
 
             <div className="anomaly-count">
               {anomalies.length}
             </div>
+
           </div>
 
           {anomalies.length === 0 ? (
+
             <div className="evidence-empty">
-              <h3>NO ANOMALIES DETECTED</h3>
+
+              <h3>
+                NO ANOMALIES DETECTED
+              </h3>
 
               <p>
-                No abnormal network behavior was recorded during this
-                investigation.
+                No abnormal network behavior
+                was recorded.
               </p>
+
             </div>
+
           ) : (
+
             <div className="anomaly-list">
-              {anomalies.map((anomaly, index) => (
-                <AnomalyCard
-                  anomaly={anomaly}
-                  index={index}
-                  key={index}
-                />
-              ))}
+
+              {anomalies.map(
+                (anomaly, index) => (
+                  <AnomalyCard
+                    anomaly={anomaly}
+                    index={index}
+                    key={index}
+                  />
+                )
+              )}
+
             </div>
           )}
+
         </div>
 
         <div className="evidence-block">
+
           <div className="evidence-subheading">
+
             <span>EVIDENCE</span>
 
             <div className="anomaly-count">
               {evidence.length}
             </div>
+
           </div>
 
           {evidence.length === 0 ? (
+
             <div className="evidence-empty">
-              <h3>NO EVIDENCE RECORDED</h3>
+
+              <h3>
+                NO EVIDENCE RECORDED
+              </h3>
 
               <p>
-                This investigation did not record supporting evidence
-                beyond the collected measurements.
+                This investigation did not
+                record supporting evidence.
               </p>
+
             </div>
+
           ) : (
+
             <div className="evidence-list">
-              {evidence.map((item, index) => (
-                <div className="evidence-item" key={index}>
-                  <div className="evidence-marker">✓</div>
 
-                  <div className="evidence-text">
-                    {item}
+              {evidence.map(
+                (item, index) => (
+
+                  <div
+                    className="evidence-item"
+                    key={index}
+                  >
+
+                    <div className="evidence-marker">
+                      ✓
+                    </div>
+
+                    <div className="evidence-text">
+                      {item}
+                    </div>
+
                   </div>
-                </div>
-              ))}
+
+                )
+              )}
+
             </div>
           )}
+
         </div>
+
       </div>
+
     </section>
   );
 }
 
-function InvestigationTimeline({ result }) {
-  const timeline = result.timeline || [];
+/* =========================================================
+   ANOMALY CARD
+========================================================= */
+
+function AnomalyCard({
+  anomaly,
+  index,
+}) {
+  const type =
+    anomaly.type ||
+    "NETWORK ANOMALY";
+
+  const hop =
+    anomaly.hop;
+
+  const severity =
+    anomaly.severity;
+
+  const excludedKeys = [
+    "type",
+    "hop",
+    "severity",
+  ];
+
+  const details =
+    Object.entries(anomaly).filter(
+      ([key]) =>
+        !excludedKeys.includes(key)
+    );
 
   return (
-    <section className="timeline-section">
-      <div className="section-heading">
-        <span>07</span>
-        <h2>INVESTIGATION TIMELINE</h2>
+    <div className="anomaly-card">
+
+      <div className="anomaly-index">
+        {String(index + 1).padStart(2, "0")}
       </div>
 
-      <p className="section-description">
-        Sequence of events recorded during the investigation.
-      </p>
+      <div className="anomaly-main">
 
-      {timeline.length === 0 ? (
-        <div className="analysis-empty">
-          <h3>NO TIMELINE AVAILABLE</h3>
+        <div className="anomaly-top">
 
-          <p>
-            No investigation events were returned for this result.
-          </p>
-        </div>
-      ) : (
-        <div className="timeline-panel">
-          <div className="timeline-line" />
-
-          <div className="timeline-list">
-            {timeline.map((item, index) => (
-              <TimelineEvent
-                event={item}
-                index={index}
-                key={index}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
-
-function TimelineEvent({ event, index }) {
-  if (!event || typeof event !== "object") {
-    return null;
-  }
-
-  const eventName =
-    event.event ||
-    event.type ||
-    event.name ||
-    "Investigation event";
-
-  const status = event.status;
-
-  return (
-    <div className="timeline-event">
-      <div className="timeline-marker">
-        <span />
-      </div>
-
-      <div className="timeline-content">
-        <div className="timeline-event-header">
-          <div className="timeline-event-name">
-            {eventName}
+          <div className="anomaly-type">
+            {type}
           </div>
 
-          {status && (
-            <div className="timeline-event-status">
-              {String(status).toUpperCase()}
+          {severity && (
+            <div
+              className={`anomaly-severity ${severity.toLowerCase()}`}
+            >
+              {severity.toUpperCase()}
             </div>
           )}
+
         </div>
 
-        <div className="timeline-event-number">
-          EVENT {String(index + 1).padStart(2, "0")}
-        </div>
+        {hop !== undefined && (
+          <div className="anomaly-hop">
+            HOP {hop}
+          </div>
+        )}
 
-        {Object.entries(event)
-          .filter(
-            ([key]) =>
-              !["event", "type", "name", "status"].includes(key)
-          )
-          .map(([key, value]) => (
-            <TimelineDetail
-              key={key}
-              label={key}
-              value={value}
-            />
-          ))}
+        {details.length > 0 && (
+          <div className="anomaly-details">
+
+            {details.map(
+              ([key, value]) => (
+
+                <AnomalyDetail
+                  key={key}
+                  label={key}
+                  value={value}
+                />
+
+              )
+            )}
+
+          </div>
+        )}
+
       </div>
+
     </div>
   );
 }
 
-function TimelineDetail({ label, value }) {
+function AnomalyDetail({
+  label,
+  value,
+}) {
   if (
     value === null ||
     value === undefined ||
@@ -882,126 +1377,215 @@ function TimelineDetail({ label, value }) {
     return null;
   }
 
-  let displayValue = value;
-
   if (Array.isArray(value)) {
-    displayValue = value.join(", ");
-  } else if (typeof value === "object") {
-    displayValue = Object.entries(value)
-      .map(
-        ([nestedKey, nestedValue]) =>
-          `${formatLabel(nestedKey)}: ${nestedValue}`
-      )
-      .join(" • ");
+    return (
+      <div className="anomaly-detail">
+
+        <span>
+          {formatLabel(label)}
+        </span>
+
+        <strong>
+          {value.join(", ")}
+        </strong>
+
+      </div>
+    );
+  }
+
+  if (typeof value === "object") {
+    return (
+      <div className="anomaly-detail">
+
+        <span>
+          {formatLabel(label)}
+        </span>
+
+        <strong>
+          {Object.entries(value)
+            .map(
+              ([nestedKey, nestedValue]) =>
+                `${formatLabel(
+                  nestedKey
+                )}: ${nestedValue}`
+            )
+            .join(" • ")}
+        </strong>
+
+      </div>
+    );
   }
 
   return (
-    <div className="timeline-detail">
-      <span>{formatLabel(label)}</span>
-      <strong>{String(displayValue)}</strong>
+    <div className="anomaly-detail">
+
+      <span>
+        {formatLabel(label)}
+      </span>
+
+      <strong>
+        {String(value)}
+      </strong>
+
     </div>
   );
 }
 
-function DiagnosisAnalysis({ result }) {
-  const diagnosis = result.diagnosis;
-  const hypotheses = result.hypotheses || [];
+/* =========================================================
+   DIAGNOSIS
+========================================================= */
+
+function DiagnosisAnalysis({
+  result,
+}) {
+  const diagnosis =
+    result.diagnosis;
+
+  const hypotheses =
+    result.hypotheses || [];
 
   if (!diagnosis) {
     return (
       <section className="diagnosis-section">
+
         <div className="section-heading">
-          <span>06</span>
-          <h2>DIAGNOSIS & HYPOTHESES</h2>
+          <span>10</span>
+          <h2>
+            DIAGNOSIS & HYPOTHESES
+          </h2>
         </div>
 
         <div className="analysis-empty">
-          <h3>NO DIAGNOSIS AVAILABLE</h3>
+
+          <h3>
+            NO DIAGNOSIS AVAILABLE
+          </h3>
 
           <p>
-            The investigation did not return a diagnostic conclusion or
-            supporting hypotheses.
+            The investigation did not return
+            a diagnostic conclusion.
           </p>
+
         </div>
+
       </section>
     );
   }
 
-  const supportingEvidence = diagnosis.supportingEvidence || [];
+  const supportingEvidence =
+    diagnosis.supportingEvidence || [];
+
   const alternativeHypotheses =
     diagnosis.alternativeHypotheses || [];
 
   return (
     <section className="diagnosis-section">
+
       <div className="section-heading">
-        <span>06</span>
-        <h2>DIAGNOSIS & HYPOTHESES</h2>
+        <span>10</span>
+        <h2>
+          DIAGNOSIS & HYPOTHESES
+        </h2>
       </div>
 
       <p className="section-description">
-        Converting the collected evidence and network anomalies into an
-        engineering diagnosis.
+        Converting the collected evidence and
+        network anomalies into an engineering diagnosis.
       </p>
 
       <div className="diagnosis-panel">
+
         <div className="diagnosis-main">
+
           <div className="diagnosis-label">
             PROBABLE CAUSE
           </div>
 
           <div className="diagnosis-cause">
-            {diagnosis.probableCause || "UNDETERMINED"}
+            {diagnosis.probableCause ||
+              "UNDETERMINED"}
           </div>
 
           <div className="diagnosis-confidence">
-            <span>CONFIDENCE</span>
+
+            <span>
+              CONFIDENCE
+            </span>
 
             <strong>
               {diagnosis.confidence
-                ? String(diagnosis.confidence).toUpperCase()
+                ? String(
+                    diagnosis.confidence
+                  ).toUpperCase()
                 : "UNKNOWN"}
             </strong>
+
           </div>
+
         </div>
 
         <div className="diagnosis-evidence">
+
           <div className="diagnosis-subheading">
             SUPPORTING EVIDENCE
           </div>
 
-          {supportingEvidence.length === 0 ? (
+          {supportingEvidence.length ===
+          0 ? (
+
             <div className="diagnosis-no-evidence">
               NO SUPPORTING EVIDENCE PROVIDED
             </div>
+
           ) : (
+
             <div className="diagnosis-evidence-list">
-              {supportingEvidence.map((item, index) => (
-                <div
-                  className="diagnosis-evidence-item"
-                  key={index}
-                >
-                  <span>✓</span>
-                  <div>{item}</div>
-                </div>
-              ))}
+
+              {supportingEvidence.map(
+                (item, index) => (
+
+                  <div
+                    className="diagnosis-evidence-item"
+                    key={index}
+                  >
+
+                    <span>✓</span>
+
+                    <div>
+                      {item}
+                    </div>
+
+                  </div>
+
+                )
+              )}
+
             </div>
           )}
+
         </div>
+
       </div>
 
       {(hypotheses.length > 0 ||
-        alternativeHypotheses.length > 0) && (
+        alternativeHypotheses.length >
+          0) && (
+
         <div className="hypotheses-panel">
+
           <div className="hypotheses-header">
+
             <div>
+
               <div className="diagnosis-subheading">
                 HYPOTHESES
               </div>
 
               <p>
-                Possible explanations considered during the
-                investigation.
+                Possible explanations considered
+                during the investigation.
               </p>
+
             </div>
 
             <div className="anomaly-count">
@@ -1009,53 +1593,81 @@ function DiagnosisAnalysis({ result }) {
                 ? hypotheses.length
                 : alternativeHypotheses.length}
             </div>
+
           </div>
 
           {hypotheses.length > 0 ? (
+
             <div className="hypotheses-list">
-              {hypotheses.map((hypothesis, index) => (
-                <HypothesisCard
-                  hypothesis={hypothesis}
-                  index={index}
-                  key={index}
-                />
-              ))}
+
+              {hypotheses.map(
+                (hypothesis, index) => (
+
+                  <HypothesisCard
+                    hypothesis={hypothesis}
+                    index={index}
+                    key={index}
+                  />
+
+                )
+              )}
+
             </div>
+
           ) : (
+
             <div className="hypotheses-list">
-              {alternativeHypotheses.map((hypothesis, index) => (
-                <HypothesisCard
-                  hypothesis={hypothesis}
-                  index={index}
-                  key={index}
-                />
-              ))}
+
+              {alternativeHypotheses.map(
+                (hypothesis, index) => (
+
+                  <HypothesisCard
+                    hypothesis={hypothesis}
+                    index={index}
+                    key={index}
+                  />
+
+                )
+              )}
+
             </div>
           )}
+
         </div>
       )}
+
     </section>
   );
 }
 
-function HypothesisCard({ hypothesis, index }) {
+function HypothesisCard({
+  hypothesis,
+  index,
+}) {
   if (typeof hypothesis === "string") {
     return (
       <div className="hypothesis-card">
+
         <div className="hypothesis-index">
           {String(index + 1).padStart(2, "0")}
         </div>
 
         <div className="hypothesis-main">
+
           <div className="hypothesis-title">
             {hypothesis}
           </div>
+
         </div>
+
       </div>
     );
   }
 
-  if (!hypothesis || typeof hypothesis !== "object") {
+  if (
+    !hypothesis ||
+    typeof hypothesis !== "object"
+  ) {
     return null;
   }
 
@@ -1072,46 +1684,65 @@ function HypothesisCard({ hypothesis, index }) {
     hypothesis.title ||
     "ALTERNATIVE HYPOTHESIS";
 
-  const details = Object.entries(hypothesis).filter(
-    ([key]) => !excludedKeys.includes(key)
-  );
+  const details =
+    Object.entries(hypothesis).filter(
+      ([key]) =>
+        !excludedKeys.includes(key)
+    );
 
   return (
     <div className="hypothesis-card">
+
       <div className="hypothesis-index">
         {String(index + 1).padStart(2, "0")}
       </div>
 
       <div className="hypothesis-main">
+
         <div className="hypothesis-top">
+
           <div className="hypothesis-title">
             {title}
           </div>
 
           {hypothesis.confidence && (
             <div className="hypothesis-confidence">
-              {String(hypothesis.confidence).toUpperCase()}
+              {String(
+                hypothesis.confidence
+              ).toUpperCase()}
             </div>
           )}
+
         </div>
 
         {details.length > 0 && (
           <div className="hypothesis-details">
-            {details.map(([key, value]) => (
-              <HypothesisDetail
-                key={key}
-                label={key}
-                value={value}
-              />
-            ))}
+
+            {details.map(
+              ([key, value]) => (
+
+                <HypothesisDetail
+                  key={key}
+                  label={key}
+                  value={value}
+                />
+
+              )
+            )}
+
           </div>
         )}
+
       </div>
+
     </div>
   );
 }
 
-function HypothesisDetail({ label, value }) {
+function HypothesisDetail({
+  label,
+  value,
+}) {
   if (
     value === null ||
     value === undefined ||
@@ -1123,83 +1754,190 @@ function HypothesisDetail({ label, value }) {
   let displayValue = value;
 
   if (Array.isArray(value)) {
-    displayValue = value.join(", ");
-  } else if (typeof value === "object") {
-    displayValue = Object.entries(value)
-      .map(
-        ([nestedKey, nestedValue]) =>
-          `${formatLabel(nestedKey)}: ${nestedValue}`
-      )
-      .join(" • ");
+    displayValue =
+      value.join(", ");
+  } else if (
+    typeof value === "object"
+  ) {
+    displayValue =
+      Object.entries(value)
+        .map(
+          ([nestedKey, nestedValue]) =>
+            `${formatLabel(
+              nestedKey
+            )}: ${nestedValue}`
+        )
+        .join(" • ");
   }
 
   return (
     <div className="hypothesis-detail">
-      <span>{formatLabel(label)}</span>
-      <strong>{String(displayValue)}</strong>
+
+      <span>
+        {formatLabel(label)}
+      </span>
+
+      <strong>
+        {String(displayValue)}
+      </strong>
+
     </div>
   );
 }
 
-function AnomalyCard({ anomaly, index }) {
-  const type = anomaly.type || "NETWORK ANOMALY";
-  const hop = anomaly.hop;
-  const severity = anomaly.severity;
+/* =========================================================
+   TIMELINE
+========================================================= */
 
-  const excludedKeys = [
-    "type",
-    "hop",
-    "severity",
-  ];
-
-  const details = Object.entries(anomaly).filter(
-    ([key]) => !excludedKeys.includes(key)
-  );
+function InvestigationTimeline({
+  result,
+}) {
+  const timeline =
+    result.timeline || [];
 
   return (
-    <div className="anomaly-card">
-      <div className="anomaly-index">
-        {String(index + 1).padStart(2, "0")}
+    <section className="timeline-section">
+
+      <div className="section-heading">
+        <span>11</span>
+        <h2>
+          INVESTIGATION TIMELINE
+        </h2>
       </div>
 
-      <div className="anomaly-main">
-        <div className="anomaly-top">
-          <div className="anomaly-type">
-            {type}
+      <p className="section-description">
+        Sequence of events recorded during
+        the investigation.
+      </p>
+
+      {timeline.length === 0 ? (
+
+        <div className="analysis-empty">
+
+          <h3>
+            NO TIMELINE AVAILABLE
+          </h3>
+
+          <p>
+            No investigation events were returned.
+          </p>
+
+        </div>
+
+      ) : (
+
+        <div className="timeline-panel">
+
+          <div className="timeline-line" />
+
+          <div className="timeline-list">
+
+            {timeline.map(
+              (item, index) => (
+
+                <TimelineEvent
+                  event={item}
+                  index={index}
+                  key={index}
+                />
+
+              )
+            )}
+
           </div>
 
-          {severity && (
-            <div
-              className={`anomaly-severity ${severity.toLowerCase()}`}
-            >
-              {severity.toUpperCase()}
+        </div>
+      )}
+
+    </section>
+  );
+}
+
+function TimelineEvent({
+  event,
+  index,
+}) {
+  if (
+    !event ||
+    typeof event !== "object"
+  ) {
+    return null;
+  }
+
+  const eventName =
+    event.event ||
+    event.type ||
+    event.name ||
+    "Investigation event";
+
+  const status =
+    event.status;
+
+  return (
+    <div className="timeline-event">
+
+      <div className="timeline-marker">
+        <span />
+      </div>
+
+      <div className="timeline-content">
+
+        <div className="timeline-event-header">
+
+          <div className="timeline-event-name">
+            {eventName}
+          </div>
+
+          {status && (
+            <div className="timeline-event-status">
+              {String(
+                status
+              ).toUpperCase()}
             </div>
+          )}
+
+        </div>
+
+        <div className="timeline-event-number">
+          EVENT{" "}
+          {String(index + 1).padStart(
+            2,
+            "0"
           )}
         </div>
 
-        {hop !== undefined && (
-          <div className="anomaly-hop">
-            HOP {hop}
-          </div>
-        )}
+        {Object.entries(event)
+          .filter(
+            ([key]) =>
+              ![
+                "event",
+                "type",
+                "name",
+                "status",
+              ].includes(key)
+          )
+          .map(
+            ([key, value]) => (
 
-        {details.length > 0 && (
-          <div className="anomaly-details">
-            {details.map(([key, value]) => (
-              <AnomalyDetail
+              <TimelineDetail
                 key={key}
                 label={key}
                 value={value}
               />
-            ))}
-          </div>
-        )}
+
+            )
+          )}
+
       </div>
+
     </div>
   );
 }
 
-function AnomalyDetail({ label, value }) {
+function TimelineDetail({
+  label,
+  value,
+}) {
   if (
     value === null ||
     value === undefined ||
@@ -1208,84 +1946,112 @@ function AnomalyDetail({ label, value }) {
     return null;
   }
 
+  let displayValue = value;
+
   if (Array.isArray(value)) {
-    return (
-      <div className="anomaly-detail">
-        <span>{formatLabel(label)}</span>
-
-        <strong>
-          {value.join(", ")}
-        </strong>
-      </div>
-    );
-  }
-
-  if (typeof value === "object") {
-    return (
-      <div className="anomaly-detail">
-        <span>{formatLabel(label)}</span>
-
-        <strong>
-          {Object.entries(value).map(
-            ([nestedKey, nestedValue]) =>
-              `${formatLabel(nestedKey)}: ${nestedValue}`
-          ).join(" • ")}
-        </strong>
-      </div>
-    );
+    displayValue =
+      value.join(", ");
+  } else if (
+    typeof value === "object"
+  ) {
+    displayValue =
+      Object.entries(value)
+        .map(
+          ([nestedKey, nestedValue]) =>
+            `${formatLabel(
+              nestedKey
+            )}: ${nestedValue}`
+        )
+        .join(" • ");
   }
 
   return (
-    <div className="anomaly-detail">
-      <span>{formatLabel(label)}</span>
+    <div className="timeline-detail">
 
-      <strong>{String(value)}</strong>
+      <span>
+        {formatLabel(label)}
+      </span>
+
+      <strong>
+        {String(displayValue)}
+      </strong>
+
     </div>
   );
 }
 
-function FinalResult({ result, target, onRetest, onNewInvestigation }) {
-  const diagnosis = result.diagnosis;
-  const comparison = result.performanceComparison;
-  const pathComparison = result.pathComparison;
-  const anomalies = result.anomalies || [];
+/* =========================================================
+   FINAL RESULT
+========================================================= */
+
+function FinalResult({
+  result,
+  target,
+  onRetest,
+  onNewInvestigation,
+}) {
+  const diagnosis =
+    result.diagnosis;
+
+  const comparison =
+    result.performanceComparison;
+
+  const pathComparison =
+    result.pathComparison;
+
+  const anomalies =
+    result.anomalies || [];
 
   const overallStatus =
-    comparison?.status === "degraded" || anomalies.length > 0
+    comparison?.status === "degraded" ||
+    anomalies.length > 0
       ? "DEGRADED"
       : "NORMAL";
 
-  const pathStatusLabel = !pathComparison
-    ? "UNKNOWN"
-    : pathComparison.status === "no_baseline"
-    ? "BASELINE ESTABLISHED"
-    : pathComparison.status.replaceAll("_", " ").toUpperCase();
+  const pathStatusLabel =
+    !pathComparison
+      ? "UNKNOWN"
+      : pathComparison.status ===
+        "no_baseline"
+      ? "BASELINE ESTABLISHED"
+      : pathComparison.status
+          .replaceAll("_", " ")
+          .toUpperCase();
 
-  const httpStatusLabel = result.http?.statusCode ?? "—";
+  const httpStatusLabel =
+    result.http?.statusCode ?? "—";
 
-  const supportingEvidence = diagnosis?.supportingEvidence || [];
+  const supportingEvidence =
+    diagnosis?.supportingEvidence || [];
 
   return (
     <section className="final-result-section">
+
       <div className="section-heading">
-        <span>08</span>
+        <span>12</span>
         <h2>FINAL RESULT</h2>
       </div>
 
       <p className="section-description">
-        Conclusion of the investigation, combining the diagnosis,
-        measurements, and strongest supporting evidence.
+        Conclusion of the investigation, combining
+        the diagnosis, measurements, and strongest
+        supporting evidence.
       </p>
 
       <div className="final-result-panel">
+
         <div className="final-result-header">
+
           <div>
             <span>TARGET</span>
-            <strong>{target}</strong>
+            <strong>
+              {target}
+            </strong>
           </div>
 
           <div>
             <span>STATUS</span>
+
             <strong
               className={
                 overallStatus === "DEGRADED"
@@ -1295,105 +2061,184 @@ function FinalResult({ result, target, onRetest, onNewInvestigation }) {
             >
               {overallStatus}
             </strong>
+
           </div>
+
         </div>
 
         <div className="final-result-grid">
+
           <div>
             <span>DIAGNOSIS</span>
-            <strong>{diagnosis?.probableCause ?? "UNDETERMINED"}</strong>
+            <strong>
+              {diagnosis?.probableCause ??
+                "UNDETERMINED"}
+            </strong>
           </div>
 
           <div>
             <span>CONFIDENCE</span>
             <strong>
               {diagnosis?.confidence
-                ? String(diagnosis.confidence).toUpperCase()
+                ? String(
+                    diagnosis.confidence
+                  ).toUpperCase()
                 : "UNKNOWN"}
             </strong>
           </div>
 
           <div>
             <span>PATH STATUS</span>
-            <strong>{pathStatusLabel}</strong>
+            <strong>
+              {pathStatusLabel}
+            </strong>
           </div>
 
           <div>
             <span>HTTP STATUS</span>
-            <strong>{httpStatusLabel}</strong>
+            <strong>
+              {httpStatusLabel}
+            </strong>
           </div>
+
         </div>
 
         {comparison && (
           <div className="final-result-metrics">
+
             <FinalMetric
               label="RTT"
-              previous={comparison.previous.rtt}
-              current={comparison.current.rtt}
-              difference={comparison.difference.rtt}
+              previous={
+                comparison.previous.rtt
+              }
+              current={
+                comparison.current.rtt
+              }
+              difference={
+                comparison.difference.rtt
+              }
               unit=" ms"
             />
 
             <FinalMetric
               label="PACKET LOSS"
-              previous={comparison.previous.packetLoss}
-              current={comparison.current.packetLoss}
-              difference={comparison.difference.packetLoss}
+              previous={
+                comparison.previous.packetLoss
+              }
+              current={
+                comparison.current.packetLoss
+              }
+              difference={
+                comparison.difference.packetLoss
+              }
               unit="%"
             />
 
             <FinalMetric
               label="HTTP RESPONSE"
-              previous={comparison.previous.httpResponseTime}
-              current={comparison.current.httpResponseTime}
-              difference={comparison.difference.httpResponseTime}
+              previous={
+                comparison.previous
+                  .httpResponseTime
+              }
+              current={
+                comparison.current
+                  .httpResponseTime
+              }
+              difference={
+                comparison.difference
+                  .httpResponseTime
+              }
               unit=" ms"
             />
+
           </div>
         )}
 
         <div className="final-result-evidence">
-          <div className="diagnosis-subheading">STRONGEST EVIDENCE</div>
 
-          {supportingEvidence.length === 0 ? (
+          <div className="diagnosis-subheading">
+            STRONGEST EVIDENCE
+          </div>
+
+          {supportingEvidence.length ===
+          0 ? (
+
             <div className="diagnosis-no-evidence">
               NO SUPPORTING EVIDENCE PROVIDED
             </div>
+
           ) : (
+
             <div className="diagnosis-evidence-list">
-              {supportingEvidence.map((item, index) => (
-                <div className="diagnosis-evidence-item" key={index}>
-                  <span>✓</span>
-                  <div>{item}</div>
-                </div>
-              ))}
+
+              {supportingEvidence.map(
+                (item, index) => (
+
+                  <div
+                    className="diagnosis-evidence-item"
+                    key={index}
+                  >
+
+                    <span>✓</span>
+
+                    <div>
+                      {item}
+                    </div>
+
+                  </div>
+
+                )
+              )}
+
             </div>
           )}
+
         </div>
 
         <div className="final-result-actions">
-          <button className="retest-button" onClick={onRetest}>
+
+          <button
+            className="retest-button"
+            onClick={onRetest}
+          >
             RETEST TARGET
           </button>
 
-          <button onClick={onNewInvestigation}>
+          <button
+            onClick={onNewInvestigation}
+          >
             NEW INVESTIGATION
           </button>
+
         </div>
+
       </div>
+
     </section>
   );
 }
 
-function FinalMetric({ label, previous, current, difference, unit }) {
+function FinalMetric({
+  label,
+  previous,
+  current,
+  difference,
+  unit,
+}) {
   const percentage =
-    previous !== 0 ? Math.round((difference / previous) * 100) : 0;
+    previous !== 0
+      ? Math.round(
+          (difference / previous) * 100
+        )
+      : 0;
 
   return (
     <div className="final-metric">
+
       <span>{label}</span>
 
       <div className="metric-values">
+
         <strong>
           {previous}
           {unit}
@@ -1405,10 +2250,12 @@ function FinalMetric({ label, previous, current, difference, unit }) {
           {current}
           {unit}
         </strong>
+
       </div>
 
       {difference !== 0 && (
         <div className="metric-difference">
+
           {difference > 0 ? "+" : ""}
           {difference}
           {unit}
@@ -1416,20 +2263,32 @@ function FinalMetric({ label, previous, current, difference, unit }) {
           {percentage !== 0 && (
             <span>
               {" "}
-              ({percentage > 0 ? "+" : ""}
+              (
+              {percentage > 0
+                ? "+"
+                : ""}
               {percentage}%)
             </span>
           )}
+
         </div>
       )}
+
     </div>
   );
 }
 
+/* =========================================================
+   UTILITY
+========================================================= */
+
 function formatLabel(value) {
   return value
     .replaceAll("_", " ")
-    .replace(/([A-Z])/g, " $1")
+    .replace(
+      /([A-Z])/g,
+      " $1"
+    )
     .trim()
     .toUpperCase();
 }

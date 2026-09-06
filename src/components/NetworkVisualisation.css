@@ -1,0 +1,190 @@
+.network-visualisation {
+  width: 100%;
+  margin-top: 32px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 28px;
+}
+
+.network-visualisation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 30px;
+  margin-bottom: 20px;
+}
+
+.network-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: rgba(255, 255, 255, 0.42);
+  margin-bottom: 8px;
+}
+
+.network-visualisation-header h3 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.network-visualisation-header p {
+  margin: 8px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.network-legend {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding-top: 8px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.legend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-dot.normal {
+  background: #e9e3d8;
+}
+
+.legend-dot.anomaly {
+  background: #ff4f9a;
+}
+
+.legend-dot.traffic {
+  background: #ffffff;
+}
+
+.network-canvas {
+  position: relative;
+  width: 100%;
+  height: 500px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #09080c;
+}
+
+.network-canvas canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.network-controls {
+  position: absolute;
+  bottom: 18px;
+  right: 20px;
+  display: flex;
+  gap: 15px;
+  pointer-events: none;
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.network-node-label {
+  min-width: 100px;
+  text-align: center;
+  transition: transform 0.15s ease;
+}
+
+.network-node-label.selected {
+  transform: scale(1.08);
+}
+
+.network-node-hop {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.network-node-ip {
+  margin-top: 4px;
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+}
+
+.network-node-meta {
+  margin-top: 3px;
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.38);
+  white-space: nowrap;
+}
+
+.network-node-label.anomalous .network-node-hop {
+  color: #ff4f9a;
+}
+
+.network-anomaly-badge {
+  padding: 4px 7px;
+  border: 1px solid rgba(255, 79, 154, 0.7);
+  background: rgba(80, 10, 45, 0.8);
+  color: #ff4f9a;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.network-visualisation-empty {
+  margin-top: 32px;
+  min-height: 220px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 30px;
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.network-empty-title {
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+}
+
+.network-empty-description {
+  margin-top: 10px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.42);
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 900px) {
+  .network-visualisation-header {
+    flex-direction: column;
+  }
+
+  .network-legend {
+    padding-top: 0;
+  }
+
+  .network-canvas {
+    height: 430px;
+  }
+
+  .network-controls {
+    left: 15px;
+    right: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}
