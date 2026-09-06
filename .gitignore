@@ -1,8 +1,10 @@
 __pycache__/
 *.py[cod]
+*.pyc
 .pytest_cache/
 .ruff_cache/
 *.egg-info/
 .venv/
 venv/
+.env
 reports/*.png
