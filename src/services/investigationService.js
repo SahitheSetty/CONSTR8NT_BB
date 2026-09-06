@@ -1,5 +1,3 @@
-import mockInvestigations from "../data/mockInvestigation";
-
 const investigations = new Map();
 
 const investigationStages = [
@@ -11,31 +9,26 @@ const investigationStages = [
   "complete",
 ];
 
-const scenarios = [
-  "healthy",
-  "pathDegradation",
-  "highLatency",
-  "packetLoss",
-];
+const API_BASE_URL = "http://127.0.0.1:8000";
 
 export function startInvestigation(target) {
   const investigationId = crypto.randomUUID();
 
-  const scenarioName = chooseScenario(target);
-  const scenario = mockInvestigations[scenarioName];
-
   const investigation = {
-    ...scenario,
     id: investigationId,
     target,
     status: "starting",
     stageIndex: 0,
     createdAt: new Date().toISOString(),
+    result: null,
+    error: null,
+    backendComplete: false,
   };
 
   investigations.set(investigationId, investigation);
 
-  simulateInvestigation(investigationId);
+  runBackendInvestigation(investigationId, target);
+  simulateInvestigationStages(investigationId);
 
   return investigationId;
 }
@@ -60,28 +53,81 @@ export function getInvestigationResult(investigationId) {
     throw new Error("Investigation not found");
   }
 
-  return investigation;
+  if (!investigation.result) {
+    throw new Error("Investigation result is not ready");
+  }
+
+  return investigation.result;
 }
 
-function chooseScenario(target) {
-  const normalizedTarget = target.toLowerCase();
+async function runBackendInvestigation(investigationId, target) {
+  const investigation = investigations.get(investigationId);
 
-  if (normalizedTarget === "github.com") {
-    return "pathDegradation";
+  if (!investigation) {
+    return;
   }
 
-  if (normalizedTarget === "google.com") {
-    return "highLatency";
-  }
+  try {
+    const response = await fetch(`${API_BASE_URL}/investigate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        target,
+      }),
+    });
 
-  if (normalizedTarget === "8.8.8.8") {
-    return "packetLoss";
-  }
+    if (!response.ok) {
+      let errorMessage = `Backend returned HTTP ${response.status}`;
 
-  return scenarios[Math.floor(Math.random() * scenarios.length)];
+      try {
+        const errorData = await response.json();
+
+        if (errorData?.detail) {
+          errorMessage = errorData.detail;
+        }
+      } catch {
+        // Keep the default HTTP error message.
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+
+    const currentInvestigation = investigations.get(investigationId);
+
+    if (!currentInvestigation) {
+      return;
+    }
+
+    currentInvestigation.result = result;
+    currentInvestigation.backendComplete = true;
+
+    if (
+      currentInvestigation.stageIndex >=
+      investigationStages.length - 1
+    ) {
+      currentInvestigation.status = "complete";
+    }
+  } catch (error) {
+    const currentInvestigation = investigations.get(investigationId);
+
+    if (!currentInvestigation) {
+      return;
+    }
+
+    currentInvestigation.error =
+      error instanceof Error
+        ? error.message
+        : "Unknown backend error";
+
+    currentInvestigation.status = "error";
+  }
 }
 
-function simulateInvestigation(investigationId) {
+function simulateInvestigationStages(investigationId) {
   const interval = setInterval(() => {
     const investigation = investigations.get(investigationId);
 
@@ -90,9 +136,20 @@ function simulateInvestigation(investigationId) {
       return;
     }
 
-    if (investigation.stageIndex >= investigationStages.length - 1) {
-      investigation.status = "complete";
+    if (investigation.status === "error") {
       clearInterval(interval);
+      return;
+    }
+
+    if (
+      investigation.stageIndex >=
+      investigationStages.length - 1
+    ) {
+      if (investigation.backendComplete) {
+        investigation.status = "complete";
+        clearInterval(interval);
+      }
+
       return;
     }
 

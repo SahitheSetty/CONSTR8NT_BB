@@ -72,46 +72,43 @@ function App() {
   };
 
   useEffect(() => {
+if (!investigationId) return;
 
-    if (!investigationId) return;
+const interval = setInterval(() => {
+try {
+const currentStatus =
+getInvestigationStatus(investigationId);
 
-    const interval = setInterval(() => {
 
-      try {
+  setStage(currentStatus.stage);
 
-        const currentStatus =
+  if (currentStatus.status === "complete") {
+    try {
+      const investigationResult =
+        getInvestigationResult(investigationId);
 
-          getInvestigationStatus(investigationId);
+      setResult(investigationResult);
+      setStatus("complete");
 
-        setStage(currentStatus.stage);
+      clearInterval(interval);
+    } catch (resultError) {
+      console.log(
+        "Backend complete, waiting for result...",
+        resultError
+      );
+    }
+  }
+} catch (error) {
+  console.error("Investigation status error:", error);
+  clearInterval(interval);
+}
 
-        if (currentStatus.status === "complete") {
 
-          const investigationResult =
+}, 500);
 
-            getInvestigationResult(investigationId);
+return () => clearInterval(interval);
+}, [investigationId]);
 
-          setResult(investigationResult);
-
-          setStatus("complete");
-
-          clearInterval(interval);
-
-        }
-
-      } catch (error) {
-
-        console.error(error);
-
-        clearInterval(interval);
-
-      }
-
-    }, 500);
-
-    return () => clearInterval(interval);
-
-  }, [investigationId]);
 
   if (status === "idle") {
 
@@ -4757,29 +4754,15 @@ function FinalResult({
 
       : "NORMAL";
 
-  const pathStatusLabel =
+ const pathStatusLabel =
+!pathComparison || !pathComparison.status
+? "UNKNOWN"
+: pathComparison.status === "no_baseline"
+? "BASELINE ESTABLISHED"
+: pathComparison.status
+.replaceAll("_", " ")
+.toUpperCase();
 
-    !pathComparison
-
-      ? "UNKNOWN"
-
-      : pathComparison.status ===
-
-        "no_baseline"
-
-      ? "BASELINE ESTABLISHED"
-
-      : pathComparison.status
-
-          .replaceAll(
-
-            "_",
-
-            " "
-
-          )
-
-          .toUpperCase();
 
   const httpStatusLabel =
 
