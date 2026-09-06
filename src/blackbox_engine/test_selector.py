@@ -85,9 +85,15 @@ class TestSelector:
         not just the winner, so a runner-up can be surfaced alongside the
         chosen probe. Callers must pass an already precondition-filtered
         set (see eligible()) -- rank() does not re-check preconditions.
+
+        Iterates `eligible` in sorted order so that tied scores break by
+        probe name deterministically -- `set` iteration order otherwise
+        depends on Python's per-process string-hash randomisation, which
+        would make probe selection nondeterministic across runs whenever
+        two probes tie (or float-round to a tie) on score.
         """
         scored = []
-        for probe in eligible:
+        for probe in sorted(eligible):
             gain = self.eig(belief, probe)
             cost = self.spec.likelihoods[probe].cost_seconds
             score = gain / max(cost, _MIN_COST_SECONDS)
