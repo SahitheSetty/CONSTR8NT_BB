@@ -1,3 +1,4 @@
+@"
 __pycache__/
 *.py[cod]
 *.pyc
@@ -7,4 +8,6 @@ __pycache__/
 .venv/
 venv/
 .env
-reports/*.pngnode_modules/
+reports/*.png
+node_modules/
+"@ | Set-Content .gitignore
