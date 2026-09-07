@@ -11,7 +11,7 @@
 
   z-index: 0;
 
-  background: #020205;
+  background: var(--bg);
 }
 
 .interactive-background canvas {

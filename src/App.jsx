@@ -324,23 +324,13 @@ function LaunchScreen({
 
         </div>
 
-        <nav className="launch-nav">
+        <div className="online-indicator">
 
-          <span>ABOUT</span>
+          <span />
 
-          <span>DOCS</span>
+          ONLINE
 
-          <span>STATUS</span>
-
-          <div className="online-indicator">
-
-            <span />
-
-            ONLINE
-
-          </div>
-
-        </nav>
+        </div>
 
       </header>
 
@@ -357,42 +347,6 @@ function LaunchScreen({
       <div className="corner-marker bottom-left" />
 
       <div className="corner-marker bottom-right" />
-
-      {/* =================================================
-
-          LEFT SIDE INFORMATION
-
-      ================================================= */}
-
-      <div className="side-info side-info-left">
-
-        <span>TRACE</span>
-
-        <span>ANALYZE</span>
-
-        <span>DETECT</span>
-
-        <span>SOLVE</span>
-
-      </div>
-
-      {/* =================================================
-
-          RIGHT SIDE QUOTE
-
-      ================================================= */}
-
-      <div className="side-info side-info-right">
-
-        <span>SOMEWHERE</span>
-
-        <span>IN THE INTERNET</span>
-
-        <span>THE ANSWER</span>
-
-        <span>IS ALWAYS THERE</span>
-
-      </div>
 
       {/* =================================================
 
@@ -530,69 +484,11 @@ function LaunchScreen({
 
       {/* =================================================
 
-          CUTE MASCOTS
+          WHAT IT CHECKS
 
       ================================================= */}
 
-      <div className="mascots">
-
-        <CuteMascot
-
-          type="blackbox"
-
-          label="BLACK BOX"
-
-        />
-
-        <CuteMascot
-
-          type="pink"
-
-          label="ANALYST"
-
-        />
-
-      </div>
-
-      {/* =================================================
-
-          LEFT LIVE SYSTEM PANEL
-
-      ================================================= */}
-
-      <LiveSystemPanel />
-
-      {/* =================================================
-
-          RIGHT PIPELINE PANEL
-
-      ================================================= */}
-
-      <PipelinePanel />
-
-      {/* =================================================
-
-          DECORATIVE PETALS
-
-      ================================================= */}
-
-      <div className="floating-petals">
-
-        <span>✦</span>
-
-        <span>◆</span>
-
-        <span>✧</span>
-
-        <span>✦</span>
-
-        <span>◇</span>
-
-        <span>✧</span>
-
-        <span>◆</span>
-
-      </div>
+      <CapabilitiesRow />
 
       <div className="launch-footer">
 
@@ -608,203 +504,39 @@ function LaunchScreen({
 
 /* =========================================================
 
-   CUTE MASCOT
+   CAPABILITIES ROW
+   ---------------------------------------------------------
+   A plain, static list of what the engine actually checks --
+   not a fake "live" panel pretending to show activity that
+   isn't happening yet.
 
 ========================================================= */
 
-function CuteMascot({
+function CapabilitiesRow() {
 
-  type,
-
-  label,
-
-}) {
-
-  return (
-
-    <div className={`mascot ${type}`}>
-
-      <div className="mascot-cape" />
-
-      <div className="mascot-body">
-
-        <div className="cat-ear left" />
-
-        <div className="cat-ear right" />
-
-        <div className="cat-face">
-
-          <div className="cat-eye left" />
-
-          <div className="cat-eye right" />
-
-          <div className="cat-nose" />
-
-        </div>
-
-        <div className="mascot-symbol">
-
-          {type === "blackbox"
-
-            ? "B"
-
-            : "♥"}
-
-        </div>
-
-      </div>
-
-      <div className="mascot-tail" />
-
-      {type === "pink" && (
-
-        <div className="mascot-bow">
-
-          ♥
-
-        </div>
-
-      )}
-
-      <div className="mascot-label">
-
-        {label}
-
-      </div>
-
-    </div>
-
-  );
-
-}
-
-/* =========================================================
-
-   LIVE SYSTEM PANEL
-
-========================================================= */
-
-function LiveSystemPanel() {
-
-  return (
-
-    <div className="live-system-panel">
-
-      <div className="panel-title">
-
-        LIVE SYSTEM
-
-      </div>
-
-      <div className="signal-graph">
-
-        <span />
-
-        <span />
-
-        <span />
-
-        <span />
-
-        <span />
-
-        <span />
-
-        <span />
-
-        <span />
-
-        <span />
-
-        <span />
-
-      </div>
-
-      <div className="panel-status">
-
-        SCANNING THE INTERNET
-
-      </div>
-
-      <div className="progress-track">
-
-        <div />
-
-      </div>
-
-    </div>
-
-  );
-
-}
-
-/* =========================================================
-
-   PIPELINE PANEL
-
-========================================================= */
-
-function PipelinePanel() {
-
-  const stages = [
-
-    "MONITORING",
-
+  const checks = [
     "DNS",
-
     "HTTP",
-
+    "TCP",
+    "TLS",
     "TRACEROUTE",
-
     "ANOMALY DETECTION",
-
-    "PATH ANALYSIS",
-
     "DIAGNOSIS",
-
   ];
 
   return (
 
-    <div className="pipeline-panel">
+    <div className="capabilities-row">
 
-      {stages.map(
+      {checks.map((check) => (
 
-        (stage, index) => (
+        <span key={check} className="capability-chip">
 
-          <div
+          {check}
 
-            className="pipeline-row"
+        </span>
 
-            key={stage}
-
-          >
-
-            <div
-
-              className={`pipeline-status-dot ${
-
-                index === 0
-
-                  ? "active"
-
-                  : ""
-
-              }`}
-
-            />
-
-            <span>
-
-              {stage}
-
-            </span>
-
-          </div>
-
-        )
-
-      )}
+      ))}
 
     </div>
 

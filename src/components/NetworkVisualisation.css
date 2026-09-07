@@ -63,7 +63,7 @@
 }
 
 .legend-dot.anomaly {
-  background: #ff4f9a;
+  background: var(--danger);
 }
 
 .legend-dot.traffic {
@@ -76,7 +76,7 @@
   height: 500px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: #09080c;
+  background: var(--bg);
 }
 
 .network-canvas canvas {
@@ -129,14 +129,14 @@
 }
 
 .network-node-label.anomalous .network-node-hop {
-  color: #ff4f9a;
+  color: var(--danger);
 }
 
 .network-anomaly-badge {
   padding: 4px 7px;
-  border: 1px solid rgba(255, 79, 154, 0.7);
-  background: rgba(80, 10, 45, 0.8);
-  color: #ff4f9a;
+  border: 1px solid rgba(var(--danger-rgb), 0.7);
+  background: rgba(var(--danger-rgb), 0.18);
+  color: var(--danger);
   font-size: 7px;
   font-weight: 700;
   letter-spacing: 0.14em;

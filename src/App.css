@@ -17,8 +17,8 @@ body,
 }
 
 body {
-  background: #050207;
-  color: #f7edf5;
+  background: var(--bg);
+  color: var(--text);
   font-family: "JetBrains Mono", monospace;
 }
 
@@ -32,7 +32,7 @@ button {
 }
 
 ::selection {
-  background: rgba(255, 35, 170, 0.45);
+  background: rgba(var(--accent-rgb), 0.35);
   color: white;
 }
 
@@ -48,25 +48,19 @@ button {
 
   background:
     radial-gradient(
-      circle at 50% 35%,
-      rgba(255, 20, 170, 0.12),
-      transparent 34%
+      circle at 50% 20%,
+      rgba(var(--accent-rgb), 0.08),
+      transparent 40%
     ),
-    radial-gradient(
-      circle at 50% 90%,
-      rgba(255, 15, 155, 0.16),
-      transparent 45%
-    ),
-    #050207;
+    var(--bg);
 }
 
 /* =========================================================
    ATMOSPHERE
    ---------------------------------------------------------
-   NOTE: the globe, its glow, and its atmosphere are now
-   drawn entirely inside InteractiveBackground's canvas.
-   Do not add a second globe/halo here via ::before/::after
-   or you'll get the "two backgrounds stacked" bug again.
+   NOTE: the network-node background is drawn entirely
+   inside InteractiveBackground's canvas. Do not add a
+   second background here via ::before/::after.
 ========================================================= */
 
 .launch-vignette {
@@ -87,22 +81,7 @@ button {
 }
 
 .scanlines {
-  position: fixed;
-  inset: 0;
-
-  z-index: 2;
-
-  pointer-events: none;
-
-  background:
-    repeating-linear-gradient(
-      to bottom,
-      transparent 0px,
-      transparent 4px,
-      rgba(255, 255, 255, 0.012) 5px
-    );
-
-  opacity: 0.5;
+  display: none;
 }
 
 /* =========================================================
@@ -133,23 +112,11 @@ button {
   display: grid;
   place-items: center;
 
-  border: 1px solid
-    rgba(255, 45, 180, 0.85);
+  border: 1px solid var(--border-strong);
 
-  background: rgba(
-    255,
-    25,
-    170,
-    0.1
-  );
+  background: var(--bg-elevated);
 
-  color: #ff3db5;
-
-  box-shadow:
-    0 0 20px
-      rgba(255, 20, 170, 0.25),
-    inset 0 0 15px
-      rgba(255, 20, 170, 0.1);
+  color: var(--accent);
 
   font-size: 20px;
 }
@@ -167,45 +134,10 @@ button {
 .brand-subtitle {
   margin-top: 4px;
 
-  color: rgba(
-    255,
-    210,
-    240,
-    0.48
-  );
+  color: var(--text-tertiary);
 
   font-size: 8px;
   letter-spacing: 3px;
-}
-
-.launch-nav {
-  display: flex;
-  align-items: center;
-  gap: 34px;
-
-  color: rgba(
-    255,
-    225,
-    245,
-    0.58
-  );
-
-  font-size: 10px;
-  letter-spacing: 2px;
-}
-
-.launch-nav span {
-  transition:
-    color 0.2s ease,
-    text-shadow 0.2s ease;
-}
-
-.launch-nav span:hover {
-  color: #ff38b1;
-
-  text-shadow:
-    0 0 12px
-      rgba(255, 35, 175, 0.8);
 }
 
 .online-indicator {
@@ -215,22 +147,11 @@ button {
 
   padding: 9px 14px;
 
-  border: 1px solid
-    rgba(255, 40, 180, 0.5);
+  border: 1px solid var(--border-strong);
 
-  color: rgba(
-    255,
-    230,
-    247,
-    0.75
-  );
+  color: var(--text-secondary);
 
-  background: rgba(
-    255,
-    20,
-    165,
-    0.055
-  );
+  background: var(--bg-elevated);
 }
 
 .online-indicator span {
@@ -239,29 +160,19 @@ button {
 
   border-radius: 50%;
 
-  background: #ff29ad;
+  background: var(--success);
 
-  box-shadow:
-    0 0 8px #ff29ad,
-    0 0 18px
-      rgba(255, 30, 175, 0.9);
-
-  animation:
-    onlinePulse
-    1.5s
-    infinite;
+  animation: onlinePulse 1.5s infinite;
 }
 
 @keyframes onlinePulse {
   0%,
   100% {
     opacity: 0.5;
-    transform: scale(0.8);
   }
 
   50% {
     opacity: 1;
-    transform: scale(1.2);
   }
 }
 
@@ -285,12 +196,7 @@ button {
 
   position: absolute;
 
-  background: rgba(
-    255,
-    55,
-    185,
-    0.7
-  );
+  background: var(--border-strong);
 }
 
 .corner-marker::before {
@@ -330,42 +236,6 @@ button {
 }
 
 /* =========================================================
-   SIDE INFORMATION
-========================================================= */
-
-.side-info {
-  position: absolute;
-  z-index: 7;
-
-  color: rgba(
-    255,
-    220,
-    245,
-    0.45
-  );
-
-  font-size: 9px;
-  line-height: 1.55;
-  letter-spacing: 3px;
-}
-
-.side-info-left {
-  left: 9%;
-  top: 18%;
-
-  display: flex;
-  flex-direction: column;
-}
-
-.side-info-right {
-  right: 8%;
-  top: 18%;
-
-  display: flex;
-  flex-direction: column;
-}
-
-/* =========================================================
    HERO
 ========================================================= */
 
@@ -386,14 +256,10 @@ button {
 }
 
 .hero-label {
-  color: #ff39b2;
+  color: var(--accent-strong);
 
   font-size: 11px;
   letter-spacing: 4px;
-
-  text-shadow:
-    0 0 12px
-      rgba(255, 35, 175, 0.75);
 }
 
 .black-box-title {
@@ -416,31 +282,7 @@ button {
   letter-spacing: 12px;
   line-height: 0.9;
 
-  color: #fff8fc;
-
-  text-shadow:
-    0 0 3px white,
-    0 0 20px
-      rgba(255, 120, 215, 0.5),
-    0 0 55px
-      rgba(255, 20, 165, 0.25);
-
-  animation:
-    titleFloat
-    5s
-    ease-in-out
-    infinite;
-}
-
-@keyframes titleFloat {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(-4px);
-  }
+  color: var(--text);
 }
 
 .title-line {
@@ -457,11 +299,7 @@ button {
 .title-line span {
   height: 1px;
 
-  background: #ff2eae;
-
-  box-shadow:
-    0 0 8px
-      rgba(255, 35, 175, 0.9);
+  background: var(--border-strong);
 }
 
 .title-line span:nth-child(1) {
@@ -470,6 +308,8 @@ button {
 
 .title-line span:nth-child(2) {
   width: 130px;
+  background: var(--accent);
+  opacity: 0.6;
 }
 
 .title-line span:nth-child(3) {
@@ -479,12 +319,7 @@ button {
 .launch-description {
   margin: 0 auto 42px;
 
-  color: rgba(
-    255,
-    238,
-    249,
-    0.82
-  );
+  color: var(--text-secondary);
 
   font-size: 13px;
   letter-spacing: 2.5px;
@@ -501,39 +336,18 @@ button {
   width: 100%;
   height: 72px;
 
-  border: 1px solid
-    rgba(255, 40, 180, 0.78);
+  border: 1px solid var(--border-strong);
 
-  background:
-    linear-gradient(
-      90deg,
-      rgba(255, 20, 165, 0.065),
-      rgba(0, 0, 0, 0.42)
-    );
-
-  box-shadow:
-    0 0 25px
-      rgba(255, 25, 175, 0.12),
-    inset 0 0 25px
-      rgba(255, 20, 165, 0.04);
+  background: var(--bg-elevated);
 
   transition:
-    box-shadow 0.25s ease,
-    border-color 0.25s ease,
-    transform 0.25s ease;
+    border-color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .target-form:hover,
 .target-form-focused {
-  border-color: #ff49b8;
-
-  box-shadow:
-    0 0 20px
-      rgba(255, 35, 180, 0.22),
-    0 0 55px
-      rgba(255, 35, 180, 0.1),
-    inset 0 0 25px
-      rgba(255, 20, 165, 0.08);
+  border-color: var(--accent);
 
   transform: translateY(-2px);
 }
@@ -544,7 +358,7 @@ button {
   display: grid;
   place-items: center;
 
-  color: #ff38b1;
+  color: var(--accent);
 
   font-size: 31px;
 }
@@ -559,19 +373,14 @@ button {
 
   background: transparent;
 
-  color: #fff;
+  color: var(--text);
 
   font-size: 18px;
   letter-spacing: 1px;
 }
 
 .target-form input::placeholder {
-  color: rgba(
-    255,
-    230,
-    245,
-    0.3
-  );
+  color: var(--text-tertiary);
 }
 
 .investigate-button {
@@ -579,23 +388,15 @@ button {
 
   border: none;
 
-  background:
-    linear-gradient(
-      135deg,
-      #ff3db2,
-      #d91b91
-    );
+  background: var(--accent);
 
-  color: #190914;
+  color: #ffffff;
 
   font-weight: 700;
 
   letter-spacing: 2px;
 
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    background 0.2s ease;
+  transition: background 0.2s ease;
 }
 
 .investigate-button span {
@@ -605,21 +406,11 @@ button {
 
   font-size: 20px;
 
-  transition:
-    transform 0.2s ease;
+  transition: transform 0.2s ease;
 }
 
 .investigate-button:hover {
-  background:
-    linear-gradient(
-      135deg,
-      #ff69c3,
-      #ff2da6
-    );
-
-  box-shadow:
-    0 0 28px
-      rgba(255, 40, 180, 0.55);
+  background: var(--accent-strong);
 }
 
 .investigate-button:hover span {
@@ -629,394 +420,39 @@ button {
 .launch-hint {
   margin-top: 14px;
 
-  color: rgba(
-    255,
-    225,
-    242,
-    0.38
-  );
+  color: var(--text-tertiary);
 
   font-size: 8px;
   letter-spacing: 3px;
 }
 
 /* =========================================================
-   MASCOTS
-   ---------------------------------------------------------
-   DISABLED FOR NOW.
-   We will add the better cats later.
+   CAPABILITIES ROW
 ========================================================= */
 
-.mascots {
-  display: none !important;
-}
-
-/* =========================================================
-   LIVE SYSTEM PANEL
-========================================================= */
-
-.live-system-panel,
-.pipeline-panel {
-  position: absolute;
+.capabilities-row {
+  position: relative;
   z-index: 7;
 
-  bottom: 8%;
-
-  border: 1px solid
-    rgba(255, 45, 180, 0.36);
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(18, 7, 18, 0.72),
-      rgba(3, 2, 5, 0.82)
-    );
-
-  backdrop-filter: blur(8px);
-
-  box-shadow:
-    inset 0 0 25px
-      rgba(255, 25, 175, 0.04);
-}
-
-.live-system-panel {
-  left: 3%;
-
-  width: 310px;
-  height: 140px;
-
-  padding: 20px;
-}
-
-.pipeline-panel {
-  right: 3%;
-
-  width: 230px;
-
-  padding: 17px 20px;
-}
-
-.panel-title {
-  color: rgba(
-    255,
-    220,
-    242,
-    0.5
-  );
-
-  font-size: 8px;
-  letter-spacing: 3px;
-}
-
-.signal-graph {
   display: flex;
-  align-items: center;
-  gap: 3px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
 
-  height: 42px;
+  width: min(700px, calc(100% - 40px));
 
-  margin-top: 9px;
+  margin: 40px auto 0;
 }
 
-.signal-graph span {
-  width: 18px;
+.capability-chip {
+  padding: 8px 14px;
 
-  background: #ff2eae;
+  border: 1px solid var(--border);
 
-  box-shadow:
-    0 0 8px
-      rgba(255, 35, 180, 0.7);
+  color: var(--text-tertiary);
 
-  animation:
-    signal
-    1.3s
-    ease-in-out
-    infinite;
-}
-
-.signal-graph span:nth-child(1) {
-  height: 13px;
-}
-
-.signal-graph span:nth-child(2) {
-  height: 26px;
-  animation-delay: -0.2s;
-}
-
-.signal-graph span:nth-child(3) {
-  height: 18px;
-  animation-delay: -0.5s;
-}
-
-.signal-graph span:nth-child(4) {
-  height: 33px;
-  animation-delay: -0.1s;
-}
-
-.signal-graph span:nth-child(5) {
-  height: 17px;
-  animation-delay: -0.7s;
-}
-
-.signal-graph span:nth-child(6) {
-  height: 29px;
-  animation-delay: -0.3s;
-}
-
-.signal-graph span:nth-child(7) {
-  height: 12px;
-  animation-delay: -0.8s;
-}
-
-.signal-graph span:nth-child(8) {
-  height: 26px;
-  animation-delay: -0.4s;
-}
-
-.signal-graph span:nth-child(9) {
-  height: 20px;
-  animation-delay: -0.9s;
-}
-
-.signal-graph span:nth-child(10) {
-  height: 31px;
-  animation-delay: -0.6s;
-}
-
-@keyframes signal {
-  0%,
-  100% {
-    opacity: 0.25;
-    transform: scaleY(0.55);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scaleY(1);
-  }
-}
-
-.panel-status {
-  color: rgba(
-    255,
-    225,
-    243,
-    0.5
-  );
-
-  font-size: 8px;
+  font-size: 9px;
   letter-spacing: 2px;
-}
-
-.progress-track {
-  width: 100%;
-  height: 3px;
-
-  margin-top: 10px;
-
-  background: rgba(
-    255,
-    255,
-    255,
-    0.08
-  );
-}
-
-.progress-track div {
-  width: 62%;
-  height: 100%;
-
-  background: #ff2eae;
-
-  box-shadow:
-    0 0 10px
-      rgba(255, 35, 180, 0.85);
-
-  animation:
-    progressMove
-    2s
-    ease-in-out
-    infinite alternate;
-}
-
-@keyframes progressMove {
-  from {
-    width: 35%;
-  }
-
-  to {
-    width: 90%;
-  }
-}
-
-/* =========================================================
-   PIPELINE PANEL
-========================================================= */
-
-.pipeline-row {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-
-  height: 27px;
-
-  color: rgba(
-    255,
-    225,
-    242,
-    0.43
-  );
-
-  font-size: 7px;
-  letter-spacing: 2px;
-}
-
-.pipeline-status-dot {
-  width: 6px;
-  height: 6px;
-
-  border-radius: 50%;
-
-  background: rgba(
-    255,
-    230,
-    245,
-    0.35
-  );
-
-  box-shadow:
-    0 0 5px
-      rgba(255, 50, 190, 0.25);
-}
-
-.pipeline-status-dot.active {
-  background: #ff2eae;
-
-  box-shadow:
-    0 0 7px #ff2eae,
-    0 0 15px
-      rgba(255, 35, 180, 0.7);
-}
-
-/* =========================================================
-   FLOATING DECORATION
-========================================================= */
-
-.floating-petals {
-  position: absolute;
-  inset: 0;
-
-  z-index: 4;
-
-  overflow: hidden;
-
-  pointer-events: none;
-}
-
-.floating-petals span {
-  position: absolute;
-
-  color: rgba(
-    255,
-    45,
-    175,
-    0.68
-  );
-
-  text-shadow:
-    0 0 12px
-      rgba(255, 25, 175, 0.8);
-
-  animation:
-    petalFloat
-    linear
-    infinite;
-}
-
-.floating-petals span:nth-child(1) {
-  left: 15%;
-  top: 25%;
-  animation-duration: 9s;
-}
-
-.floating-petals span:nth-child(2) {
-  left: 78%;
-  top: 30%;
-  animation-duration: 12s;
-}
-
-.floating-petals span:nth-child(3) {
-  left: 24%;
-  top: 62%;
-  animation-duration: 10s;
-}
-
-.floating-petals span:nth-child(4) {
-  left: 88%;
-  top: 55%;
-  animation-duration: 13s;
-}
-
-.floating-petals span:nth-child(5) {
-  left: 7%;
-  top: 46%;
-  animation-duration: 11s;
-}
-
-.floating-petals span:nth-child(6) {
-  left: 70%;
-  top: 18%;
-  animation-duration: 8s;
-}
-
-.floating-petals span:nth-child(7) {
-  left: 92%;
-  top: 70%;
-  animation-duration: 14s;
-}
-
-@keyframes petalFloat {
-  0% {
-    transform:
-      translate3d(
-        0,
-        0,
-        0
-      )
-      rotate(0deg);
-
-    opacity: 0;
-  }
-
-  15% {
-    opacity: 0.8;
-  }
-
-  50% {
-    transform:
-      translate3d(
-        20px,
-        50px,
-        0
-      )
-      rotate(90deg);
-  }
-
-  85% {
-    opacity: 0.5;
-  }
-
-  100% {
-    transform:
-      translate3d(
-        -15px,
-        100px,
-        0
-      )
-      rotate(180deg);
-
-    opacity: 0;
-  }
 }
 
 /* =========================================================
@@ -1024,25 +460,17 @@ button {
 ========================================================= */
 
 .launch-footer {
-  position: absolute;
+  position: relative;
   z-index: 7;
 
-  bottom: 24px;
-  left: 50%;
+  margin: 32px 0 28px;
 
-  transform: translateX(-50%);
+  text-align: center;
 
-  color: rgba(
-    255,
-    220,
-    242,
-    0.28
-  );
+  color: var(--text-tertiary);
 
   font-size: 8px;
   letter-spacing: 5px;
-
-  white-space: nowrap;
 }
 
 /* =========================================================
@@ -1052,15 +480,9 @@ button {
 .investigation-screen {
   min-height: 100vh;
 
-  background:
-    radial-gradient(
-      circle at 50% 0%,
-      rgba(255, 25, 175, 0.09),
-      transparent 35%
-    ),
-    #060308;
+  background: var(--bg);
 
-  color: #f7edf5;
+  color: var(--text);
 
   padding-bottom: 100px;
 }
@@ -1076,26 +498,15 @@ button {
 
   padding: 28px 5%;
 
-  border-bottom: 1px solid
-    rgba(255, 35, 180, 0.2);
+  border-bottom: 1px solid var(--border);
 
-  background: rgba(
-    5,
-    2,
-    8,
-    0.8
-  );
+  background: rgba(11, 14, 20, 0.85);
 
   backdrop-filter: blur(15px);
 }
 
 .system-label {
-  color: rgba(
-    255,
-    60,
-    190,
-    0.75
-  );
+  color: var(--accent-strong);
 
   font-size: 9px;
   letter-spacing: 3px;
@@ -1113,7 +524,7 @@ button {
 }
 
 .target-status {
-  color: #ff3db2;
+  color: var(--accent-strong);
 
   font-size: 9px;
   letter-spacing: 2px;
@@ -1152,7 +563,7 @@ button {
 }
 
 .section-heading > span {
-  color: #ff2eae;
+  color: var(--accent-strong);
 
   font-size: 10px;
   letter-spacing: 2px;
@@ -1172,12 +583,7 @@ button {
 .section-description {
   max-width: 760px;
 
-  color: rgba(
-    255,
-    225,
-    243,
-    0.48
-  );
+  color: var(--text-secondary);
 
   font-size: 10px;
   line-height: 1.8;
@@ -1218,12 +624,7 @@ button {
   width: 100%;
   height: 1px;
 
-  background: rgba(
-    255,
-    255,
-    255,
-    0.08
-  );
+  background: var(--border);
 }
 
 .pipeline-stage:first-child::before {
@@ -1248,35 +649,27 @@ button {
 
   border-radius: 50%;
 
-  background: #201421;
+  background: var(--bg-elevated-2);
 
-  border: 1px solid
-    rgba(255, 40, 180, 0.4);
+  border: 1px solid var(--border-strong);
 
   z-index: 2;
 }
 
 .pipeline-stage.active
   .pipeline-dot {
-  background: #ff2eae;
-
-  box-shadow:
-    0 0 10px
-      rgba(255, 35, 180, 0.85);
+  background: var(--accent);
+  border-color: var(--accent);
 }
 
 .pipeline-stage.completed
   .pipeline-dot {
-  background: #ff249f;
+  background: var(--success);
+  border-color: var(--success);
 }
 
 .pipeline-name {
-  color: rgba(
-    255,
-    225,
-    243,
-    0.4
-  );
+  color: var(--text-tertiary);
 
   font-size: 8px;
   letter-spacing: 1px;
@@ -1284,7 +677,7 @@ button {
 
 .pipeline-stage.active
   .pipeline-name {
-  color: #ff42b5;
+  color: var(--accent-strong);
 }
 
 /* =========================================================
@@ -1302,19 +695,9 @@ button {
 .timeline-panel,
 .final-result-panel,
 .hop-details-panel {
-  border: 1px solid
-    rgba(255, 35, 180, 0.2);
+  border: 1px solid var(--border);
 
-  background:
-    linear-gradient(
-      145deg,
-      rgba(255, 25, 170, 0.04),
-      rgba(10, 5, 12, 0.65)
-    );
-
-  box-shadow:
-    inset 0 0 30px
-      rgba(255, 25, 170, 0.028);
+  background: var(--bg-elevated);
 }
 
 /* =========================================================
@@ -1330,7 +713,7 @@ button {
   align-items: center;
   gap: 10px;
 
-  color: #ff38b1;
+  color: var(--accent-strong);
 
   font-size: 9px;
   letter-spacing: 2px;
@@ -1342,10 +725,7 @@ button {
 
   border-radius: 50%;
 
-  background: #ff2eae;
-
-  box-shadow:
-    0 0 10px #ff2eae;
+  background: var(--accent);
 
   animation:
     onlinePulse
@@ -1364,12 +744,7 @@ button {
 }
 
 .running-panel p {
-  color: rgba(
-    255,
-    225,
-    243,
-    0.4
-  );
+  color: var(--text-tertiary);
 
   font-size: 10px;
 }
@@ -1383,7 +758,7 @@ button {
 }
 
 .completed-status {
-  color: #ff3db2;
+  color: var(--accent-strong);
 
   font-size: 10px;
   letter-spacing: 2px;
@@ -1414,12 +789,7 @@ button {
 .timeline-detail span {
   display: block;
 
-  color: rgba(
-    255,
-    220,
-    240,
-    0.35
-  );
+  color: var(--text-tertiary);
 
   font-size: 8px;
   letter-spacing: 1.5px;
@@ -1432,7 +802,7 @@ button {
 
   margin-top: 8px;
 
-  color: #fff;
+  color: var(--text);
 
   font-size: 13px;
 }
@@ -1448,10 +818,9 @@ button {
 
   overflow: hidden;
 
-  border: 1px solid
-    rgba(255, 35, 180, 0.2);
+  border: 1px solid var(--border);
 
-  background: #030205;
+  background: var(--bg);
 
   position: relative;
 }
@@ -1463,12 +832,7 @@ button {
 .path-label {
   margin: 25px 0 12px;
 
-  color: rgba(
-    255,
-    55,
-    190,
-    0.58
-  );
+  color: var(--text-tertiary);
 
   font-size: 8px;
   letter-spacing: 2px;
@@ -1497,42 +861,30 @@ button {
 
   text-align: left;
 
-  border: 1px solid
-    rgba(255, 45, 185, 0.2);
+  border: 1px solid var(--border);
 
-  background: rgba(
-    15,
-    7,
-    17,
-    0.8
-  );
+  background: var(--bg-elevated-2);
 
-  color: white;
+  color: var(--text);
 
   transition:
     border-color 0.2s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+    transform 0.2s ease;
 }
 
 .hop-card:hover,
 .hop-card.selected {
-  border-color: #ff38b1;
+  border-color: var(--accent);
 
   transform: translateY(-4px);
-
-  box-shadow:
-    0 0 25px
-      rgba(255, 30, 180, 0.16);
 }
 
 .hop-card.anomalous {
-  border-color:
-    rgba(255, 70, 110, 0.55);
+  border-color: var(--danger);
 }
 
 .hop-number {
-  color: #ff38b1;
+  color: var(--accent-strong);
 
   font-size: 8px;
   letter-spacing: 2px;
@@ -1551,12 +903,7 @@ button {
 
   margin-top: 12px;
 
-  color: rgba(
-    255,
-    225,
-    243,
-    0.45
-  );
+  color: var(--text-tertiary);
 
   font-size: 8px;
 }
@@ -1564,12 +911,7 @@ button {
 .hop-network {
   margin-top: 12px;
 
-  color: rgba(
-    255,
-    65,
-    195,
-    0.68
-  );
+  color: var(--text-secondary);
 
   font-size: 8px;
 }
@@ -1577,7 +919,7 @@ button {
 .hop-warning {
   margin-top: 12px;
 
-  color: #ff668c;
+  color: var(--danger);
 
   font-size: 8px;
   letter-spacing: 1px;
@@ -1587,12 +929,7 @@ button {
   width: 65px;
   height: 1px;
 
-  background:
-    linear-gradient(
-      90deg,
-      rgba(255, 35, 180, 0.55),
-      rgba(255, 35, 180, 0.05)
-    );
+  background: var(--border-strong);
 }
 
 /* =========================================================
@@ -1607,24 +944,14 @@ button {
 .analysis-empty h3 {
   margin: 0;
 
-  color: rgba(
-    255,
-    225,
-    243,
-    0.75
-  );
+  color: var(--text);
 
   font-size: 12px;
   letter-spacing: 2px;
 }
 
 .analysis-empty p {
-  color: rgba(
-    255,
-    225,
-    243,
-    0.4
-  );
+  color: var(--text-tertiary);
 
   font-size: 10px;
 }
@@ -1643,8 +970,7 @@ button {
 
   padding-bottom: 22px;
 
-  border-bottom: 1px solid
-    rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--border);
 }
 
 .hop-details-header strong {
@@ -1652,7 +978,7 @@ button {
 
   margin-top: 7px;
 
-  color: #ff3db2;
+  color: var(--accent-strong);
 
   font-size: 16px;
 }
@@ -1684,19 +1010,13 @@ button {
 
   padding: 18px;
 
-  border-left: 2px solid
-    #ff557f;
+  border-left: 2px solid var(--danger);
 
-  background: rgba(
-    255,
-    60,
-    100,
-    0.05
-  );
+  background: rgba(var(--danger-rgb), 0.06);
 }
 
 .hop-anomaly-title {
-  color: #ff6a8c;
+  color: var(--danger);
 
   font-size: 10px;
 }
@@ -1704,12 +1024,7 @@ button {
 .hop-anomaly-severity {
   margin-top: 8px;
 
-  color: rgba(
-    255,
-    225,
-    240,
-    0.4
-  );
+  color: var(--text-tertiary);
 
   font-size: 8px;
 }
@@ -1720,12 +1035,7 @@ button {
 
 .hop-evidence-title,
 .diagnosis-subheading {
-  color: rgba(
-    255,
-    220,
-    240,
-    0.45
-  );
+  color: var(--text-tertiary);
 
   font-size: 8px;
   letter-spacing: 2px;
@@ -1734,12 +1044,7 @@ button {
 .hop-evidence-item {
   margin-top: 10px;
 
-  color: rgba(
-    255,
-    235,
-    247,
-    0.7
-  );
+  color: var(--text-secondary);
 
   font-size: 10px;
 }
@@ -1748,7 +1053,7 @@ button {
 .diagnosis-evidence-item span {
   margin-right: 9px;
 
-  color: #ff38b1;
+  color: var(--accent-strong);
 }
 
 /* =========================================================
@@ -1764,10 +1069,9 @@ button {
 .analysis-status {
   padding: 9px 13px;
 
-  border: 1px solid
-    rgba(255, 35, 180, 0.3);
+  border: 1px solid var(--border-strong);
 
-  color: #ff3db2;
+  color: var(--accent-strong);
 
   font-size: 8px;
   letter-spacing: 1.5px;
@@ -1783,12 +1087,7 @@ button {
 }
 
 .comparison-message {
-  color: rgba(
-    255,
-    230,
-    245,
-    0.7
-  );
+  color: var(--text-secondary);
 
   font-size: 12px;
   line-height: 1.7;
@@ -1812,16 +1111,11 @@ button {
 .comparison-grid > div {
   padding: 18px;
 
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
 }
 
 .comparison-grid span {
-  color: rgba(
-    255,
-    220,
-    240,
-    0.35
-  );
+  color: var(--text-tertiary);
 
   font-size: 8px;
 }
@@ -1831,7 +1125,7 @@ button {
 
   margin-top: 9px;
 
-  color: #fff;
+  color: var(--text);
 
   font-size: 15px;
 }
@@ -1850,12 +1144,7 @@ button {
 .route-column-title {
   margin-bottom: 10px;
 
-  color: rgba(
-    255,
-    220,
-    240,
-    0.35
-  );
+  color: var(--text-tertiary);
 
   font-size: 8px;
   letter-spacing: 2px;
@@ -1870,25 +1159,15 @@ button {
 }
 
 .route-hop.removed {
-  background: rgba(
-    255,
-    70,
-    100,
-    0.07
-  );
+  background: rgba(var(--danger-rgb), 0.08);
 
-  color: #ff758f;
+  color: var(--danger);
 }
 
 .route-hop.added {
-  background: rgba(
-    255,
-    35,
-    180,
-    0.07
-  );
+  background: rgba(63, 196, 138, 0.1);
 
-  color: #ff52b9;
+  color: var(--success);
 }
 
 /* =========================================================
@@ -1898,8 +1177,7 @@ button {
 .performance-metric {
   padding: 18px;
 
-  border: 1px solid
-    rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
 }
 
 .metric-values {
@@ -1911,28 +1189,23 @@ button {
 }
 
 .metric-values strong {
-  color: #fff;
+  color: var(--text);
 
   font-size: 14px;
 }
 
 .current-value {
-  color: #ff42b5 !important;
+  color: var(--accent-strong) !important;
 }
 
 .metric-values span {
-  color: rgba(
-    255,
-    220,
-    240,
-    0.3
-  );
+  color: var(--text-tertiary);
 }
 
 .metric-difference {
   margin-top: 10px;
 
-  color: #ff42b5;
+  color: var(--warning);
 
   font-size: 9px;
 }
@@ -1946,28 +1219,15 @@ button {
 
   padding: 18px;
 
-  border-left: 2px solid
-    #ff35ae;
+  border-left: 2px solid var(--accent);
 }
 
 .performance-finding span {
-  color: rgba(
-    255,
-    220,
-    240,
-    0.35
-  );
-
-  font-size: 8px;
+  color: var(--text-tertiary);
 }
 
 .performance-finding strong {
-  color: rgba(
-    255,
-    235,
-    247,
-    0.75
-  );
+  color: var(--text-secondary);
 
   font-size: 11px;
 }
@@ -1992,12 +1252,7 @@ button {
 
   margin-bottom: 15px;
 
-  color: rgba(
-    255,
-    220,
-    240,
-    0.45
-  );
+  color: var(--text-tertiary);
 
   font-size: 8px;
   letter-spacing: 2px;
@@ -2010,10 +1265,9 @@ button {
   width: 27px;
   height: 27px;
 
-  border: 1px solid
-    rgba(255, 40, 180, 0.3);
+  border: 1px solid var(--border-strong);
 
-  color: #ff42b5;
+  color: var(--accent-strong);
 
   font-size: 9px;
 }
@@ -2021,28 +1275,17 @@ button {
 .evidence-empty {
   padding: 25px;
 
-  border: 1px solid
-    rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
 }
 
 .evidence-empty h3 {
-  color: rgba(
-    255,
-    230,
-    245,
-    0.65
-  );
+  color: var(--text-secondary);
 
   font-size: 10px;
 }
 
 .evidence-empty p {
-  color: rgba(
-    255,
-    225,
-    240,
-    0.35
-  );
+  color: var(--text-tertiary);
 
   font-size: 9px;
 }
@@ -2054,25 +1297,19 @@ button {
   margin-top: 10px;
   padding: 18px;
 
-  border: 1px solid
-    rgba(255, 40, 180, 0.16);
+  border: 1px solid rgba(var(--danger-rgb), 0.2);
 
-  background: rgba(
-    255,
-    25,
-    170,
-    0.028
-  );
+  background: rgba(var(--danger-rgb), 0.035);
 }
 
-.anomaly-index,
+.anomaly-index {
+  color: var(--danger);
+
+  font-size: 9px;
+}
+
 .hypothesis-index {
-  color: rgba(
-    255,
-    50,
-    190,
-    0.58
-  );
+  color: var(--accent-strong);
 
   font-size: 9px;
 }
@@ -2093,12 +1330,7 @@ button {
 
 .anomaly-type,
 .hypothesis-title {
-  color: rgba(
-    255,
-    235,
-    247,
-    0.8
-  );
+  color: var(--text);
 
   font-size: 10px;
   font-weight: 600;
@@ -2112,21 +1344,21 @@ button {
 
 .anomaly-severity.high,
 .anomaly-severity.critical {
-  color: #ff647e;
+  color: var(--danger);
 }
 
 .anomaly-severity.medium {
-  color: #ffb35e;
+  color: var(--warning);
 }
 
 .anomaly-severity.low {
-  color: #ff52ba;
+  color: var(--text-secondary);
 }
 
 .anomaly-hop {
   margin-top: 8px;
 
-  color: #ff42b5;
+  color: var(--text-tertiary);
 
   font-size: 8px;
 }
@@ -2146,19 +1378,13 @@ button {
 
   padding: 7px 0;
 
-  border-bottom: 1px solid
-    rgba(255, 255, 255, 0.035);
+  border-bottom: 1px solid var(--border);
 }
 
 .anomaly-detail strong,
 .hypothesis-detail strong,
 .timeline-detail strong {
-  color: rgba(
-    255,
-    235,
-    247,
-    0.65
-  );
+  color: var(--text-secondary);
 
   font-size: 8px;
 
@@ -2171,21 +1397,15 @@ button {
 
   padding: 13px 0;
 
-  border-bottom: 1px solid
-    rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border);
 }
 
 .evidence-marker {
-  color: #ff38b1;
+  color: var(--accent-strong);
 }
 
 .evidence-text {
-  color: rgba(
-    255,
-    235,
-    247,
-    0.62
-  );
+  color: var(--text-secondary);
 
   font-size: 9px;
   line-height: 1.6;
@@ -2210,17 +1430,11 @@ button {
 }
 
 .diagnosis-main {
-  border-right: 1px solid
-    rgba(255, 255, 255, 0.06);
+  border-right: 1px solid var(--border);
 }
 
 .diagnosis-label {
-  color: rgba(
-    255,
-    220,
-    240,
-    0.4
-  );
+  color: var(--text-tertiary);
 
   font-size: 8px;
   letter-spacing: 2px;
@@ -2229,7 +1443,7 @@ button {
 .diagnosis-cause {
   margin-top: 15px;
 
-  color: #ff52b9;
+  color: var(--text);
 
   font-family:
     "Space Grotesk",
@@ -2245,18 +1459,13 @@ button {
 
   margin-top: 35px;
 
-  color: rgba(
-    255,
-    220,
-    240,
-    0.4
-  );
+  color: var(--text-tertiary);
 
   font-size: 8px;
 }
 
 .diagnosis-confidence strong {
-  color: #ff42b5;
+  color: var(--accent-strong);
 }
 
 .diagnosis-evidence-list {
@@ -2268,12 +1477,7 @@ button {
 
   padding: 11px 0;
 
-  color: rgba(
-    255,
-    235,
-    247,
-    0.65
-  );
+  color: var(--text-secondary);
 
   font-size: 9px;
   line-height: 1.6;
@@ -2282,12 +1486,7 @@ button {
 .diagnosis-no-evidence {
   margin-top: 15px;
 
-  color: rgba(
-    255,
-    220,
-    240,
-    0.3
-  );
+  color: var(--text-tertiary);
 
   font-size: 9px;
 }
@@ -2304,12 +1503,7 @@ button {
 }
 
 .hypotheses-header p {
-  color: rgba(
-    255,
-    220,
-    240,
-    0.35
-  );
+  color: var(--text-tertiary);
 
   font-size: 9px;
 }
@@ -2322,8 +1516,7 @@ button {
 
   padding: 18px;
 
-  border: 1px solid
-    rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
 }
 
 /* =========================================================
@@ -2354,9 +1547,11 @@ button {
   background:
     linear-gradient(
       to bottom,
-      #ff2eae,
-      rgba(255, 45, 180, 0.05)
+      var(--accent),
+      transparent
     );
+
+  opacity: 0.5;
 }
 
 .timeline-event {
@@ -2387,11 +1582,7 @@ button {
 
   border-radius: 50%;
 
-  background: #ff35ae;
-
-  box-shadow:
-    0 0 12px
-      rgba(255, 35, 180, 0.75);
+  background: var(--accent);
 }
 
 .timeline-content {
@@ -2399,8 +1590,7 @@ button {
 
   padding: 16px;
 
-  border: 1px solid
-    rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
 }
 
 .timeline-event-header {
@@ -2409,18 +1599,13 @@ button {
 }
 
 .timeline-event-name {
-  color: rgba(
-    255,
-    235,
-    247,
-    0.8
-  );
+  color: var(--text);
 
   font-size: 11px;
 }
 
 .timeline-event-status {
-  color: #ff42b5;
+  color: var(--accent-strong);
 
   font-size: 7px;
   letter-spacing: 1px;
@@ -2429,12 +1614,7 @@ button {
 .timeline-event-number {
   margin-top: 7px;
 
-  color: rgba(
-    255,
-    220,
-    240,
-    0.3
-  );
+  color: var(--text-tertiary);
 
   font-size: 7px;
 }
@@ -2453,16 +1633,15 @@ button {
 
   padding-bottom: 25px;
 
-  border-bottom: 1px solid
-    rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--border);
 }
 
 .status-degraded {
-  color: #ff6684 !important;
+  color: var(--danger) !important;
 }
 
 .status-normal {
-  color: #ff42b5 !important;
+  color: var(--success) !important;
 }
 
 .final-result-grid {
@@ -2496,17 +1675,11 @@ button {
 .final-metric {
   padding: 18px;
 
-  border: 1px solid
-    rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
 }
 
 .final-metric > span {
-  color: rgba(
-    255,
-    220,
-    240,
-    0.35
-  );
+  color: var(--text-tertiary);
 
   font-size: 8px;
   letter-spacing: 2px;
@@ -2528,49 +1701,35 @@ button {
 .final-result-actions button {
   padding: 14px 22px;
 
-  border: 1px solid
-    rgba(255, 45, 180, 0.42);
+  border: 1px solid var(--border-strong);
 
-  background: rgba(
-    255,
-    25,
-    170,
-    0.065
-  );
+  background: var(--bg-elevated);
 
-  color: #ff42b5;
+  color: var(--text);
 
   font-size: 9px;
   letter-spacing: 1.5px;
 
-  transition:
-    background 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .final-result-actions button:hover {
-  background: rgba(
-    255,
-    35,
-    180,
-    0.15
-  );
-
-  box-shadow:
-    0 0 20px
-      rgba(255, 35, 180, 0.18);
+  border-color: var(--accent);
+  background: var(--bg-elevated-2);
 }
 
 .final-result-actions
   .retest-button {
-  background: #ff35ae;
+  background: var(--accent);
+  border-color: var(--accent);
 
-  color: #170811;
+  color: #ffffff;
 }
 
 .final-result-actions
   .retest-button:hover {
-  background: #ff65c1;
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
 }
 
 /* =========================================================
@@ -2578,28 +1737,6 @@ button {
 ========================================================= */
 
 @media (max-width: 1000px) {
-  .launch-nav {
-    display: none;
-  }
-
-  .side-info {
-    display: none;
-  }
-
-  .live-system-panel {
-    left: 20px;
-    bottom: 20px;
-  }
-
-  .pipeline-panel {
-    right: 20px;
-    bottom: 20px;
-  }
-
-  .mascots {
-    display: none !important;
-  }
-
   .completed-summary,
   .final-result-grid,
   .comparison-grid,
@@ -2657,13 +1794,13 @@ button {
     font-size: 8px;
   }
 
-  .live-system-panel,
-  .pipeline-panel {
-    display: none;
+  .capabilities-row {
+    margin-top: 28px;
   }
 
-  .mascots {
-    display: none !important;
+  .capability-chip {
+    font-size: 8px;
+    padding: 6px 10px;
   }
 
   .launch-footer {
@@ -2694,8 +1831,7 @@ button {
   .diagnosis-main {
     border-right: none;
 
-    border-bottom: 1px solid
-      rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid var(--border);
   }
 
   .final-result-actions {

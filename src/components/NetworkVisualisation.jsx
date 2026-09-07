@@ -20,16 +20,16 @@ function NetworkNode({
   const nodeColor = isDestination
     ? "#ffffff"
     : isAnomalous
-    ? "#ff4f9a"
+    ? "#e55a5a"
     : selected
     ? "#ffffff"
-    : "#e9e3d8";
+    : "#c9ccd3";
 
   const emissiveColor = isAnomalous
-    ? "#ff2f8a"
+    ? "#c23f3f"
     : selected
-    ? "#ffffff"
-    : "#777777";
+    ? "#5b8def"
+    : "#3a3f4a";
 
   return (
     <group
@@ -183,10 +183,10 @@ function NetworkConnection({
       <lineBasicMaterial
         color={
           anomalous
-            ? "#ff4f9a"
+            ? "#e55a5a"
             : highlighted
-            ? "#ffffff"
-            : "#8a8290"
+            ? "#5b8def"
+            : "#4a4f5a"
         }
         transparent
         opacity={
@@ -366,7 +366,7 @@ export default function NetworkVisualisation({
         >
           <color
             attach="background"
-            args={["#09080c"]}
+            args={["#0b0e14"]}
           />
 
           <NetworkScene
