@@ -10,6 +10,7 @@ from blackbox_engine.cli import (
     _format_chose_over,
     _main_async,
     _parse_args,
+    _resolve_target,
     _run_investigation,
 )
 from blackbox_engine.mocks import SCENARIOS, ReplayMock, ScenarioMock
@@ -54,6 +55,39 @@ def test_parse_args_accepts_scenario():
 def test_parse_args_accepts_slow_flag():
     args = _parse_args(["example.com", "--scenario", "dns_failure", "--slow"])
     assert args.slow is True
+
+
+def test_parse_args_target_is_optional():
+    args = _parse_args(["--scenario", "dns_failure"])
+    assert args.target is None
+
+
+def test_resolve_target_prefers_explicit_target():
+    args = _parse_args(["acme.example.com", "--scenario", "routing_blackhole"])
+    assert _resolve_target(args) == "acme.example.com"
+
+
+def test_resolve_target_defaults_to_scenario_name_when_omitted():
+    args = _parse_args(["--scenario", "routing_blackhole"])
+    assert _resolve_target(args) == "demo-routing_blackhole"
+
+
+def test_resolve_target_defaults_to_replay_files_own_target_when_omitted(tmp_path):
+    replay_file = tmp_path / "replay.json"
+    replay_file.write_text(json.dumps({"p1_raw": {"target": "example.com"}}))
+
+    args = _parse_args(["--replay", str(replay_file)])
+
+    assert _resolve_target(args) == "example.com"
+
+
+def test_resolve_target_falls_back_when_replay_file_has_no_target(tmp_path):
+    replay_file = tmp_path / "replay.json"
+    replay_file.write_text(json.dumps({"p1_raw": {}}))
+
+    args = _parse_args(["--replay", str(replay_file)])
+
+    assert _resolve_target(args) == "unknown-target"
 
 
 def test_build_probe_runner_scenario_returns_scenario_mock():

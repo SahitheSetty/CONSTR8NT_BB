@@ -138,6 +138,10 @@ uv run blackbox example.com --scenario congestion_loss --slow
 uv run blackbox example.com --replay tests/fixtures/combined_sample.json
 ```
 
+The target is optional -- neither source is a live lookup, so it's only
+used to label the run. Omit it and `--scenario` defaults to `demo-<name>`;
+`--replay` defaults to the replay file's own `p1_raw.target`.
+
 `--replay` expects a JSON file shaped `{"p1_raw": {...}, "p2_analysis": {...}}`
 (see `tests/fixtures/p1_sample.json` / `p2_sample.json` for the shape each
 half takes); it's run through `adapter.to_observations` before the
