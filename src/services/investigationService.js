@@ -43,6 +43,8 @@ export function getInvestigationStatus(investigationId) {
   return {
     status: investigation.status,
     stage: investigationStages[investigation.stageIndex],
+    backendComplete: investigation.backendComplete,
+    resultReady: investigation.result !== null,
   };
 }
 
@@ -145,7 +147,10 @@ function simulateInvestigationStages(investigationId) {
       investigation.stageIndex >=
       investigationStages.length - 1
     ) {
-      if (investigation.backendComplete) {
+      if (
+        investigation.backendComplete &&
+        investigation.result
+      ) {
         investigation.status = "complete";
         clearInterval(interval);
       }
@@ -156,5 +161,13 @@ function simulateInvestigationStages(investigationId) {
     investigation.stageIndex += 1;
     investigation.status =
       investigationStages[investigation.stageIndex];
+
+    if (
+      investigation.stageIndex >=
+        investigationStages.length - 1 &&
+      !investigation.backendComplete
+    ) {
+      investigation.status = "path_analysis";
+    }
   }, 1500);
 }

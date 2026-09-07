@@ -1,18 +1,3 @@
-# BLACK BOX diagnosis engine -- hypothesis priors and likelihood table.
-#
-# PLACEHOLDER VALUES. Priors are uniform (1/12) and every likelihood table
-# is a uniform distribution over that probe's observation symbols, repeated
-# identically for every hypothesis. This satisfies spec_loader.validate_spec()
-# (every constraint holds) but carries zero diagnostic signal -- every probe
-# currently looks equally likely under every hypothesis. Person 3 (owner)
-# fills in the real numbers by hand; see the handbook, Annexure I, for the
-# reasoning behind refused > timeout, ECMP traps, etc.
-#
-# likelihoods.<probe>.table[symbol][hypothesis] = P(observing `symbol` on
-# `probe` | `hypothesis`). Each (probe, hypothesis) column -- i.e. summed
-# across that probe's symbols -- must sum to 1.0. No probability may be
-# 0.0 or 1.0; smoothed range [0.01, 0.99].
-
 hypotheses:
   dns_failure:
     prior: 0.083333
@@ -21,42 +6,48 @@ hypotheses:
   auth_ns_down:
     prior: 0.083333
     label: The domain's authoritative nameserver is unreachable
-    remediation: Contact the registrar/DNS host to check authoritative nameserver health and reachability.
+    remediation: Contact the registrar/DNS host to check authoritative nameserver
+      health and reachability.
   routing_blackhole:
     prior: 0.083333
     label: Network path silently drops traffic before reaching the destination
-    remediation: Escalate to the network/transit provider; check for BGP null-routes or ACLs on intermediate
-      ASes.
+    remediation: Escalate to the network/transit provider; check for BGP null-routes
+      or ACLs on intermediate ASes.
   path_change_degraded:
     prior: 0.083333
     label: A recent route change is causing degraded connectivity
-    remediation: Compare current and baseline paths; work with the network team to revert or repair the
-      new route.
+    remediation: Compare current and baseline paths; work with the network team to
+      revert or repair the new route.
   congestion_loss:
     prior: 0.083333
     label: Packet loss caused by congestion along the network path
-    remediation: Check for capacity saturation on the path; consider QoS, traffic shaping, or a capacity
-      upgrade.
+    remediation: Check for capacity saturation on the path; consider QoS, traffic
+      shaping, or a capacity upgrade.
   server_down:
     prior: 0.083333
     label: The destination server or service is down
-    remediation: Check the server process and host health directly; restart the failed service.
+    remediation: Check the server process and host health directly; restart the failed
+      service.
   app_layer_error:
     prior: 0.083333
     label: Server is reachable but returning application-level errors
-    remediation: Inspect application logs, recent deploys, and upstream dependency health.
+    remediation: Inspect application logs, recent deploys, and upstream dependency
+      health.
   tls_failure:
     prior: 0.083333
     label: TLS handshake is failing
-    remediation: Check certificate validity, chain completeness, and hostname/SNI configuration.
+    remediation: Check certificate validity, chain completeness, and hostname/SNI
+      configuration.
   waf_or_rate_limited:
     prior: 0.083333
     label: Requests are being blocked by a WAF or rate limiter
-    remediation: Review WAF/rate-limit rules and allowlist the affected traffic if the block is unintended.
+    remediation: Review WAF/rate-limit rules and allowlist the affected traffic if
+      the block is unintended.
   local_vantage_bad:
     prior: 0.083333
     label: The diagnosis vantage point itself has a local network problem
-    remediation: Re-run the investigation from a different vantage point/region to rule out a local issue.
+    remediation: Re-run the investigation from a different vantage point/region to
+      rule out a local issue.
   mtu_blackhole:
     prior: 0.083333
     label: Path MTU discovery is failing and large packets are being dropped
@@ -64,172 +55,173 @@ hypotheses:
   client_local_issue:
     prior: 0.083337
     label: The issue is local to the requesting client, not the network path
-    remediation: Check client-side firewall, proxy, VPN, and local DNS/hosts file configuration.
+    remediation: Check client-side firewall, proxy, VPN, and local DNS/hosts file
+      configuration.
 likelihoods:
   dns_resolution:
     cost_seconds: 0.8
     table:
       ok:
-        dns_failure: 0.2
-        auth_ns_down: 0.2
-        routing_blackhole: 0.2
+        dns_failure: 0.048
+        auth_ns_down: 0.0575
+        routing_blackhole: 0.105
         path_change_degraded: 0.2
         congestion_loss: 0.2
         server_down: 0.2
         app_layer_error: 0.2
         tls_failure: 0.2
         waf_or_rate_limited: 0.2
-        local_vantage_bad: 0.2
+        local_vantage_bad: 0.073333333
         mtu_blackhole: 0.2
         client_local_issue: 0.2
       nxdomain:
-        dns_failure: 0.2
-        auth_ns_down: 0.2
-        routing_blackhole: 0.2
+        dns_failure: 0.238
+        auth_ns_down: 0.0575
+        routing_blackhole: 0.105
         path_change_degraded: 0.2
         congestion_loss: 0.2
         server_down: 0.2
         app_layer_error: 0.2
         tls_failure: 0.2
         waf_or_rate_limited: 0.2
-        local_vantage_bad: 0.2
+        local_vantage_bad: 0.073333333
         mtu_blackhole: 0.2
         client_local_issue: 0.2
       servfail:
-        dns_failure: 0.2
-        auth_ns_down: 0.2
-        routing_blackhole: 0.2
+        dns_failure: 0.238
+        auth_ns_down: 0.295
+        routing_blackhole: 0.105
         path_change_degraded: 0.2
         congestion_loss: 0.2
         server_down: 0.2
         app_layer_error: 0.2
         tls_failure: 0.2
         waf_or_rate_limited: 0.2
-        local_vantage_bad: 0.2
+        local_vantage_bad: 0.073333333
         mtu_blackhole: 0.2
         client_local_issue: 0.2
       refused:
-        dns_failure: 0.2
-        auth_ns_down: 0.2
-        routing_blackhole: 0.2
+        dns_failure: 0.238
+        auth_ns_down: 0.295
+        routing_blackhole: 0.105
         path_change_degraded: 0.2
         congestion_loss: 0.2
         server_down: 0.2
         app_layer_error: 0.2
         tls_failure: 0.2
         waf_or_rate_limited: 0.2
-        local_vantage_bad: 0.2
+        local_vantage_bad: 0.39
         mtu_blackhole: 0.2
         client_local_issue: 0.2
       timeout:
-        dns_failure: 0.2
-        auth_ns_down: 0.2
-        routing_blackhole: 0.2
+        dns_failure: 0.238
+        auth_ns_down: 0.295
+        routing_blackhole: 0.58
         path_change_degraded: 0.2
         congestion_loss: 0.2
         server_down: 0.2
         app_layer_error: 0.2
         tls_failure: 0.2
         waf_or_rate_limited: 0.2
-        local_vantage_bad: 0.2
+        local_vantage_bad: 0.39
         mtu_blackhole: 0.2
         client_local_issue: 0.2
   dns_consistency:
     cost_seconds: 1.5
     table:
       all_agree:
-        dns_failure: 0.333333
-        auth_ns_down: 0.333333
-        routing_blackhole: 0.333333
-        path_change_degraded: 0.333333
-        congestion_loss: 0.333333
-        server_down: 0.333333
-        app_layer_error: 0.333333
-        tls_failure: 0.333333
-        waf_or_rate_limited: 0.333333
-        local_vantage_bad: 0.333333
-        mtu_blackhole: 0.333333
-        client_local_issue: 0.333333
+        dns_failure: 0.084615385
+        auth_ns_down: 0.084615385
+        routing_blackhole: 0.333333333
+        path_change_degraded: 0.333333333
+        congestion_loss: 0.333333333
+        server_down: 0.333333333
+        app_layer_error: 0.333333333
+        tls_failure: 0.333333333
+        waf_or_rate_limited: 0.333333333
+        local_vantage_bad: 0.333333333
+        mtu_blackhole: 0.333333333
+        client_local_issue: 0.333333333
       resolvers_disagree:
-        dns_failure: 0.333333
-        auth_ns_down: 0.333333
-        routing_blackhole: 0.333333
-        path_change_degraded: 0.333333
-        congestion_loss: 0.333333
-        server_down: 0.333333
-        app_layer_error: 0.333333
-        tls_failure: 0.333333
-        waf_or_rate_limited: 0.333333
-        local_vantage_bad: 0.333333
-        mtu_blackhole: 0.333333
-        client_local_issue: 0.333333
+        dns_failure: 0.457692308
+        auth_ns_down: 0.457692308
+        routing_blackhole: 0.333333333
+        path_change_degraded: 0.333333333
+        congestion_loss: 0.333333333
+        server_down: 0.333333333
+        app_layer_error: 0.333333333
+        tls_failure: 0.333333333
+        waf_or_rate_limited: 0.333333333
+        local_vantage_bad: 0.333333333
+        mtu_blackhole: 0.333333333
+        client_local_issue: 0.333333333
       auth_differs_from_cache:
-        dns_failure: 0.333334
-        auth_ns_down: 0.333334
-        routing_blackhole: 0.333334
-        path_change_degraded: 0.333334
-        congestion_loss: 0.333334
-        server_down: 0.333334
-        app_layer_error: 0.333334
-        tls_failure: 0.333334
-        waf_or_rate_limited: 0.333334
-        local_vantage_bad: 0.333334
-        mtu_blackhole: 0.333334
-        client_local_issue: 0.333334
+        dns_failure: 0.457692308
+        auth_ns_down: 0.457692308
+        routing_blackhole: 0.333333333
+        path_change_degraded: 0.333333333
+        congestion_loss: 0.333333333
+        server_down: 0.333333333
+        app_layer_error: 0.333333333
+        tls_failure: 0.333333333
+        waf_or_rate_limited: 0.333333333
+        local_vantage_bad: 0.333333333
+        mtu_blackhole: 0.333333333
+        client_local_issue: 0.333333333
   tcp_443:
     cost_seconds: 0.5
     table:
       open:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
+        routing_blackhole: 0.116666667
         path_change_degraded: 0.25
-        congestion_loss: 0.25
-        server_down: 0.25
-        app_layer_error: 0.25
-        tls_failure: 0.25
-        waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
-        mtu_blackhole: 0.25
+        congestion_loss: 0.116666667
+        server_down: 0.060526316
+        app_layer_error: 0.65
+        tls_failure: 0.65
+        waf_or_rate_limited: 0.313157895
+        local_vantage_bad: 0.116666667
+        mtu_blackhole: 0.116666667
         client_local_issue: 0.25
       refused:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
+        routing_blackhole: 0.116666667
         path_change_degraded: 0.25
-        congestion_loss: 0.25
-        server_down: 0.25
-        app_layer_error: 0.25
-        tls_failure: 0.25
-        waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
-        mtu_blackhole: 0.25
+        congestion_loss: 0.116666667
+        server_down: 0.313157895
+        app_layer_error: 0.116666667
+        tls_failure: 0.116666667
+        waf_or_rate_limited: 0.313157895
+        local_vantage_bad: 0.116666667
+        mtu_blackhole: 0.116666667
         client_local_issue: 0.25
       timeout:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
+        routing_blackhole: 0.65
         path_change_degraded: 0.25
-        congestion_loss: 0.25
-        server_down: 0.25
-        app_layer_error: 0.25
-        tls_failure: 0.25
-        waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
-        mtu_blackhole: 0.25
+        congestion_loss: 0.65
+        server_down: 0.313157895
+        app_layer_error: 0.116666667
+        tls_failure: 0.116666667
+        waf_or_rate_limited: 0.060526316
+        local_vantage_bad: 0.65
+        mtu_blackhole: 0.65
         client_local_issue: 0.25
       reset:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
+        routing_blackhole: 0.116666667
         path_change_degraded: 0.25
-        congestion_loss: 0.25
-        server_down: 0.25
-        app_layer_error: 0.25
-        tls_failure: 0.25
-        waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
-        mtu_blackhole: 0.25
+        congestion_loss: 0.116666667
+        server_down: 0.313157895
+        app_layer_error: 0.116666667
+        tls_failure: 0.116666667
+        waf_or_rate_limited: 0.313157895
+        local_vantage_bad: 0.116666667
+        mtu_blackhole: 0.116666667
         client_local_issue: 0.25
   tcp_80:
     cost_seconds: 0.5
@@ -237,284 +229,284 @@ likelihoods:
       open:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
+        routing_blackhole: 0.116666667
         path_change_degraded: 0.25
-        congestion_loss: 0.25
-        server_down: 0.25
-        app_layer_error: 0.25
+        congestion_loss: 0.116666667
+        server_down: 0.060526316
+        app_layer_error: 0.65
         tls_failure: 0.25
-        waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
+        waf_or_rate_limited: 0.313157895
+        local_vantage_bad: 0.116666667
         mtu_blackhole: 0.25
         client_local_issue: 0.25
       refused:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
+        routing_blackhole: 0.116666667
         path_change_degraded: 0.25
-        congestion_loss: 0.25
-        server_down: 0.25
-        app_layer_error: 0.25
+        congestion_loss: 0.116666667
+        server_down: 0.313157895
+        app_layer_error: 0.116666667
         tls_failure: 0.25
-        waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
+        waf_or_rate_limited: 0.313157895
+        local_vantage_bad: 0.116666667
         mtu_blackhole: 0.25
         client_local_issue: 0.25
       timeout:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
+        routing_blackhole: 0.65
         path_change_degraded: 0.25
-        congestion_loss: 0.25
-        server_down: 0.25
-        app_layer_error: 0.25
+        congestion_loss: 0.65
+        server_down: 0.313157895
+        app_layer_error: 0.116666667
         tls_failure: 0.25
-        waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
+        waf_or_rate_limited: 0.060526316
+        local_vantage_bad: 0.65
         mtu_blackhole: 0.25
         client_local_issue: 0.25
       reset:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
+        routing_blackhole: 0.116666667
         path_change_degraded: 0.25
-        congestion_loss: 0.25
-        server_down: 0.25
-        app_layer_error: 0.25
+        congestion_loss: 0.116666667
+        server_down: 0.313157895
+        app_layer_error: 0.116666667
         tls_failure: 0.25
-        waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
+        waf_or_rate_limited: 0.313157895
+        local_vantage_bad: 0.116666667
         mtu_blackhole: 0.25
         client_local_issue: 0.25
   tls_handshake:
     cost_seconds: 1.0
     table:
       ok:
-        dns_failure: 0.166667
-        auth_ns_down: 0.166667
-        routing_blackhole: 0.166667
-        path_change_degraded: 0.166667
-        congestion_loss: 0.166667
-        server_down: 0.166667
-        app_layer_error: 0.166667
-        tls_failure: 0.166667
-        waf_or_rate_limited: 0.166667
-        local_vantage_bad: 0.166667
-        mtu_blackhole: 0.166667
-        client_local_issue: 0.166667
+        dns_failure: 0.166666667
+        auth_ns_down: 0.166666667
+        routing_blackhole: 0.095454545
+        path_change_degraded: 0.166666667
+        congestion_loss: 0.095454545
+        server_down: 0.095454545
+        app_layer_error: 0.522727273
+        tls_failure: 0.046153846
+        waf_or_rate_limited: 0.522727273
+        local_vantage_bad: 0.095454545
+        mtu_blackhole: 0.166666667
+        client_local_issue: 0.522727273
       expired_cert:
-        dns_failure: 0.166667
-        auth_ns_down: 0.166667
-        routing_blackhole: 0.166667
-        path_change_degraded: 0.166667
-        congestion_loss: 0.166667
-        server_down: 0.166667
-        app_layer_error: 0.166667
-        tls_failure: 0.166667
-        waf_or_rate_limited: 0.166667
-        local_vantage_bad: 0.166667
-        mtu_blackhole: 0.166667
-        client_local_issue: 0.166667
+        dns_failure: 0.166666667
+        auth_ns_down: 0.166666667
+        routing_blackhole: 0.095454545
+        path_change_degraded: 0.166666667
+        congestion_loss: 0.095454545
+        server_down: 0.095454545
+        app_layer_error: 0.095454545
+        tls_failure: 0.226923077
+        waf_or_rate_limited: 0.095454545
+        local_vantage_bad: 0.095454545
+        mtu_blackhole: 0.166666667
+        client_local_issue: 0.095454545
       hostname_mismatch:
-        dns_failure: 0.166667
-        auth_ns_down: 0.166667
-        routing_blackhole: 0.166667
-        path_change_degraded: 0.166667
-        congestion_loss: 0.166667
-        server_down: 0.166667
-        app_layer_error: 0.166667
-        tls_failure: 0.166667
-        waf_or_rate_limited: 0.166667
-        local_vantage_bad: 0.166667
-        mtu_blackhole: 0.166667
-        client_local_issue: 0.166667
+        dns_failure: 0.166666667
+        auth_ns_down: 0.166666667
+        routing_blackhole: 0.095454545
+        path_change_degraded: 0.166666667
+        congestion_loss: 0.095454545
+        server_down: 0.095454545
+        app_layer_error: 0.095454545
+        tls_failure: 0.226923077
+        waf_or_rate_limited: 0.095454545
+        local_vantage_bad: 0.095454545
+        mtu_blackhole: 0.166666667
+        client_local_issue: 0.095454545
       chain_incomplete:
-        dns_failure: 0.166667
-        auth_ns_down: 0.166667
-        routing_blackhole: 0.166667
-        path_change_degraded: 0.166667
-        congestion_loss: 0.166667
-        server_down: 0.166667
-        app_layer_error: 0.166667
-        tls_failure: 0.166667
-        waf_or_rate_limited: 0.166667
-        local_vantage_bad: 0.166667
-        mtu_blackhole: 0.166667
-        client_local_issue: 0.166667
+        dns_failure: 0.166666667
+        auth_ns_down: 0.166666667
+        routing_blackhole: 0.095454545
+        path_change_degraded: 0.166666667
+        congestion_loss: 0.095454545
+        server_down: 0.095454545
+        app_layer_error: 0.095454545
+        tls_failure: 0.226923077
+        waf_or_rate_limited: 0.095454545
+        local_vantage_bad: 0.095454545
+        mtu_blackhole: 0.166666667
+        client_local_issue: 0.095454545
       handshake_timeout:
-        dns_failure: 0.166667
-        auth_ns_down: 0.166667
-        routing_blackhole: 0.166667
-        path_change_degraded: 0.166667
-        congestion_loss: 0.166667
-        server_down: 0.166667
-        app_layer_error: 0.166667
-        tls_failure: 0.166667
-        waf_or_rate_limited: 0.166667
-        local_vantage_bad: 0.166667
-        mtu_blackhole: 0.166667
-        client_local_issue: 0.166667
+        dns_failure: 0.166666667
+        auth_ns_down: 0.166666667
+        routing_blackhole: 0.522727273
+        path_change_degraded: 0.166666667
+        congestion_loss: 0.522727273
+        server_down: 0.522727273
+        app_layer_error: 0.095454545
+        tls_failure: 0.226923077
+        waf_or_rate_limited: 0.095454545
+        local_vantage_bad: 0.522727273
+        mtu_blackhole: 0.166666667
+        client_local_issue: 0.095454545
       not_attempted:
-        dns_failure: 0.166665
-        auth_ns_down: 0.166665
-        routing_blackhole: 0.166665
-        path_change_degraded: 0.166665
-        congestion_loss: 0.166665
-        server_down: 0.166665
-        app_layer_error: 0.166665
-        tls_failure: 0.166665
-        waf_or_rate_limited: 0.166665
-        local_vantage_bad: 0.166665
-        mtu_blackhole: 0.166665
-        client_local_issue: 0.166665
+        dns_failure: 0.166666667
+        auth_ns_down: 0.166666667
+        routing_blackhole: 0.095454545
+        path_change_degraded: 0.166666667
+        congestion_loss: 0.095454545
+        server_down: 0.095454545
+        app_layer_error: 0.095454545
+        tls_failure: 0.046153846
+        waf_or_rate_limited: 0.095454545
+        local_vantage_bad: 0.095454545
+        mtu_blackhole: 0.166666667
+        client_local_issue: 0.095454545
   http_status:
     cost_seconds: 1.5
     table:
       2xx:
-        dns_failure: 0.142857
-        auth_ns_down: 0.142857
-        routing_blackhole: 0.142857
-        path_change_degraded: 0.142857
-        congestion_loss: 0.142857
-        server_down: 0.142857
-        app_layer_error: 0.142857
-        tls_failure: 0.142857
-        waf_or_rate_limited: 0.142857
-        local_vantage_bad: 0.142857
-        mtu_blackhole: 0.142857
-        client_local_issue: 0.142857
+        dns_failure: 0.142857143
+        auth_ns_down: 0.142857143
+        routing_blackhole: 0.0875
+        path_change_degraded: 0.142857143
+        congestion_loss: 0.142857143
+        server_down: 0.064705882
+        app_layer_error: 0.064705882
+        tls_failure: 0.142857143
+        waf_or_rate_limited: 0.064705882
+        local_vantage_bad: 0.0875
+        mtu_blackhole: 0.142857143
+        client_local_issue: 0.142857143
       3xx:
-        dns_failure: 0.142857
-        auth_ns_down: 0.142857
-        routing_blackhole: 0.142857
-        path_change_degraded: 0.142857
-        congestion_loss: 0.142857
-        server_down: 0.142857
-        app_layer_error: 0.142857
-        tls_failure: 0.142857
-        waf_or_rate_limited: 0.142857
-        local_vantage_bad: 0.142857
-        mtu_blackhole: 0.142857
-        client_local_issue: 0.142857
+        dns_failure: 0.142857143
+        auth_ns_down: 0.142857143
+        routing_blackhole: 0.0875
+        path_change_degraded: 0.142857143
+        congestion_loss: 0.142857143
+        server_down: 0.064705882
+        app_layer_error: 0.064705882
+        tls_failure: 0.142857143
+        waf_or_rate_limited: 0.064705882
+        local_vantage_bad: 0.0875
+        mtu_blackhole: 0.142857143
+        client_local_issue: 0.142857143
       4xx:
-        dns_failure: 0.142857
-        auth_ns_down: 0.142857
-        routing_blackhole: 0.142857
-        path_change_degraded: 0.142857
-        congestion_loss: 0.142857
-        server_down: 0.142857
-        app_layer_error: 0.142857
-        tls_failure: 0.142857
-        waf_or_rate_limited: 0.142857
-        local_vantage_bad: 0.142857
-        mtu_blackhole: 0.142857
-        client_local_issue: 0.142857
+        dns_failure: 0.142857143
+        auth_ns_down: 0.142857143
+        routing_blackhole: 0.0875
+        path_change_degraded: 0.142857143
+        congestion_loss: 0.142857143
+        server_down: 0.064705882
+        app_layer_error: 0.338235294
+        tls_failure: 0.142857143
+        waf_or_rate_limited: 0.338235294
+        local_vantage_bad: 0.0875
+        mtu_blackhole: 0.142857143
+        client_local_issue: 0.142857143
       waf_block:
-        dns_failure: 0.142857
-        auth_ns_down: 0.142857
-        routing_blackhole: 0.142857
-        path_change_degraded: 0.142857
-        congestion_loss: 0.142857
-        server_down: 0.142857
-        app_layer_error: 0.142857
-        tls_failure: 0.142857
-        waf_or_rate_limited: 0.142857
-        local_vantage_bad: 0.142857
-        mtu_blackhole: 0.142857
-        client_local_issue: 0.142857
+        dns_failure: 0.142857143
+        auth_ns_down: 0.142857143
+        routing_blackhole: 0.0875
+        path_change_degraded: 0.142857143
+        congestion_loss: 0.142857143
+        server_down: 0.064705882
+        app_layer_error: 0.064705882
+        tls_failure: 0.142857143
+        waf_or_rate_limited: 0.338235294
+        local_vantage_bad: 0.0875
+        mtu_blackhole: 0.142857143
+        client_local_issue: 0.142857143
       5xx:
-        dns_failure: 0.142857
-        auth_ns_down: 0.142857
-        routing_blackhole: 0.142857
-        path_change_degraded: 0.142857
-        congestion_loss: 0.142857
-        server_down: 0.142857
-        app_layer_error: 0.142857
-        tls_failure: 0.142857
-        waf_or_rate_limited: 0.142857
-        local_vantage_bad: 0.142857
-        mtu_blackhole: 0.142857
-        client_local_issue: 0.142857
+        dns_failure: 0.142857143
+        auth_ns_down: 0.142857143
+        routing_blackhole: 0.0875
+        path_change_degraded: 0.142857143
+        congestion_loss: 0.142857143
+        server_down: 0.338235294
+        app_layer_error: 0.338235294
+        tls_failure: 0.142857143
+        waf_or_rate_limited: 0.064705882
+        local_vantage_bad: 0.0875
+        mtu_blackhole: 0.142857143
+        client_local_issue: 0.142857143
       no_response:
-        dns_failure: 0.142857
-        auth_ns_down: 0.142857
-        routing_blackhole: 0.142857
-        path_change_degraded: 0.142857
-        congestion_loss: 0.142857
-        server_down: 0.142857
-        app_layer_error: 0.142857
-        tls_failure: 0.142857
-        waf_or_rate_limited: 0.142857
-        local_vantage_bad: 0.142857
-        mtu_blackhole: 0.142857
-        client_local_issue: 0.142857
+        dns_failure: 0.142857143
+        auth_ns_down: 0.142857143
+        routing_blackhole: 0.475
+        path_change_degraded: 0.142857143
+        congestion_loss: 0.142857143
+        server_down: 0.338235294
+        app_layer_error: 0.064705882
+        tls_failure: 0.142857143
+        waf_or_rate_limited: 0.064705882
+        local_vantage_bad: 0.475
+        mtu_blackhole: 0.142857143
+        client_local_issue: 0.142857143
       not_attempted:
-        dns_failure: 0.142858
-        auth_ns_down: 0.142858
-        routing_blackhole: 0.142858
-        path_change_degraded: 0.142858
-        congestion_loss: 0.142858
-        server_down: 0.142858
-        app_layer_error: 0.142858
-        tls_failure: 0.142858
-        waf_or_rate_limited: 0.142858
-        local_vantage_bad: 0.142858
-        mtu_blackhole: 0.142858
-        client_local_issue: 0.142858
+        dns_failure: 0.142857143
+        auth_ns_down: 0.142857143
+        routing_blackhole: 0.0875
+        path_change_degraded: 0.142857143
+        congestion_loss: 0.142857143
+        server_down: 0.064705882
+        app_layer_error: 0.064705882
+        tls_failure: 0.142857143
+        waf_or_rate_limited: 0.064705882
+        local_vantage_bad: 0.0875
+        mtu_blackhole: 0.142857143
+        client_local_issue: 0.142857143
   latency_profile:
     cost_seconds: 3.0
     table:
       normal:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
-        path_change_degraded: 0.25
-        congestion_loss: 0.25
+        routing_blackhole: 0.078571429
+        path_change_degraded: 0.078571429
+        congestion_loss: 0.078571429
         server_down: 0.25
         app_layer_error: 0.25
         tls_failure: 0.25
         waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
-        mtu_blackhole: 0.25
+        local_vantage_bad: 0.078571429
+        mtu_blackhole: 0.116666667
         client_local_issue: 0.25
       elevated:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
-        path_change_degraded: 0.25
-        congestion_loss: 0.25
+        routing_blackhole: 0.421428571
+        path_change_degraded: 0.421428571
+        congestion_loss: 0.421428571
         server_down: 0.25
         app_layer_error: 0.25
         tls_failure: 0.25
         waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
-        mtu_blackhole: 0.25
+        local_vantage_bad: 0.421428571
+        mtu_blackhole: 0.116666667
         client_local_issue: 0.25
       severe:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
-        path_change_degraded: 0.25
-        congestion_loss: 0.25
+        routing_blackhole: 0.421428571
+        path_change_degraded: 0.421428571
+        congestion_loss: 0.421428571
         server_down: 0.25
         app_layer_error: 0.25
         tls_failure: 0.25
         waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
-        mtu_blackhole: 0.25
+        local_vantage_bad: 0.421428571
+        mtu_blackhole: 0.65
         client_local_issue: 0.25
       unmeasurable:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
-        path_change_degraded: 0.25
-        congestion_loss: 0.25
+        routing_blackhole: 0.078571429
+        path_change_degraded: 0.078571429
+        congestion_loss: 0.078571429
         server_down: 0.25
         app_layer_error: 0.25
         tls_failure: 0.25
         waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
-        mtu_blackhole: 0.25
+        local_vantage_bad: 0.078571429
+        mtu_blackhole: 0.116666667
         client_local_issue: 0.25
   packet_loss:
     cost_seconds: 3.0
@@ -522,53 +514,53 @@ likelihoods:
       none:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
-        path_change_degraded: 0.25
-        congestion_loss: 0.25
-        server_down: 0.25
+        routing_blackhole: 0.078571429
+        path_change_degraded: 0.116666667
+        congestion_loss: 0.078571429
+        server_down: 0.116666667
         app_layer_error: 0.25
         tls_failure: 0.25
         waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
+        local_vantage_bad: 0.060526316
         mtu_blackhole: 0.25
         client_local_issue: 0.25
       low:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
-        path_change_degraded: 0.25
-        congestion_loss: 0.25
-        server_down: 0.25
+        routing_blackhole: 0.078571429
+        path_change_degraded: 0.116666667
+        congestion_loss: 0.421428571
+        server_down: 0.116666667
         app_layer_error: 0.25
         tls_failure: 0.25
         waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
+        local_vantage_bad: 0.313157895
         mtu_blackhole: 0.25
         client_local_issue: 0.25
       high:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
-        path_change_degraded: 0.25
-        congestion_loss: 0.25
-        server_down: 0.25
+        routing_blackhole: 0.421428571
+        path_change_degraded: 0.65
+        congestion_loss: 0.421428571
+        server_down: 0.116666667
         app_layer_error: 0.25
         tls_failure: 0.25
         waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
+        local_vantage_bad: 0.313157895
         mtu_blackhole: 0.25
         client_local_issue: 0.25
       total:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
-        path_change_degraded: 0.25
-        congestion_loss: 0.25
-        server_down: 0.25
+        routing_blackhole: 0.421428571
+        path_change_degraded: 0.116666667
+        congestion_loss: 0.078571429
+        server_down: 0.65
         app_layer_error: 0.25
         tls_failure: 0.25
         waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
+        local_vantage_bad: 0.313157895
         mtu_blackhole: 0.25
         client_local_issue: 0.25
   path_reachability:
@@ -577,53 +569,53 @@ likelihoods:
       complete:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
-        path_change_degraded: 0.25
-        congestion_loss: 0.25
-        server_down: 0.25
+        routing_blackhole: 0.060526316
+        path_change_degraded: 0.078571429
+        congestion_loss: 0.116666667
+        server_down: 0.078571429
         app_layer_error: 0.25
         tls_failure: 0.25
         waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
+        local_vantage_bad: 0.078571429
         mtu_blackhole: 0.25
         client_local_issue: 0.25
       stalls_midpath:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
-        path_change_degraded: 0.25
-        congestion_loss: 0.25
-        server_down: 0.25
+        routing_blackhole: 0.313157895
+        path_change_degraded: 0.421428571
+        congestion_loss: 0.65
+        server_down: 0.078571429
         app_layer_error: 0.25
         tls_failure: 0.25
         waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
+        local_vantage_bad: 0.421428571
         mtu_blackhole: 0.25
         client_local_issue: 0.25
       stalls_at_edge:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
-        path_change_degraded: 0.25
-        congestion_loss: 0.25
-        server_down: 0.25
+        routing_blackhole: 0.313157895
+        path_change_degraded: 0.421428571
+        congestion_loss: 0.116666667
+        server_down: 0.421428571
         app_layer_error: 0.25
         tls_failure: 0.25
         waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
+        local_vantage_bad: 0.078571429
         mtu_blackhole: 0.25
         client_local_issue: 0.25
       no_response:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
-        path_change_degraded: 0.25
-        congestion_loss: 0.25
-        server_down: 0.25
+        routing_blackhole: 0.313157895
+        path_change_degraded: 0.078571429
+        congestion_loss: 0.116666667
+        server_down: 0.421428571
         app_layer_error: 0.25
         tls_failure: 0.25
         waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
+        local_vantage_bad: 0.421428571
         mtu_blackhole: 0.25
         client_local_issue: 0.25
   path_change:
@@ -632,53 +624,53 @@ likelihoods:
       unchanged:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
-        path_change_degraded: 0.25
-        congestion_loss: 0.25
+        routing_blackhole: 0.116666667
+        path_change_degraded: 0.116666667
+        congestion_loss: 0.116666667
         server_down: 0.25
         app_layer_error: 0.25
         tls_failure: 0.25
         waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
+        local_vantage_bad: 0.116666667
         mtu_blackhole: 0.25
         client_local_issue: 0.25
       changed_correlated:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
-        path_change_degraded: 0.25
-        congestion_loss: 0.25
+        routing_blackhole: 0.116666667
+        path_change_degraded: 0.65
+        congestion_loss: 0.116666667
         server_down: 0.25
         app_layer_error: 0.25
         tls_failure: 0.25
         waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
+        local_vantage_bad: 0.116666667
         mtu_blackhole: 0.25
         client_local_issue: 0.25
       changed_uncorrelated:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
-        path_change_degraded: 0.25
-        congestion_loss: 0.25
+        routing_blackhole: 0.65
+        path_change_degraded: 0.116666667
+        congestion_loss: 0.65
         server_down: 0.25
         app_layer_error: 0.25
         tls_failure: 0.25
         waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
+        local_vantage_bad: 0.65
         mtu_blackhole: 0.25
         client_local_issue: 0.25
       no_baseline:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
-        path_change_degraded: 0.25
-        congestion_loss: 0.25
+        routing_blackhole: 0.116666667
+        path_change_degraded: 0.116666667
+        congestion_loss: 0.116666667
         server_down: 0.25
         app_layer_error: 0.25
         tls_failure: 0.25
         waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
+        local_vantage_bad: 0.116666667
         mtu_blackhole: 0.25
         client_local_issue: 0.25
   external_vantage:
@@ -687,94 +679,94 @@ likelihoods:
       target_ok_externally:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
-        path_change_degraded: 0.25
+        routing_blackhole: 0.060526316
+        path_change_degraded: 0.116666667
         congestion_loss: 0.25
-        server_down: 0.25
+        server_down: 0.078571429
         app_layer_error: 0.25
         tls_failure: 0.25
-        waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
+        waf_or_rate_limited: 0.116666667
+        local_vantage_bad: 0.65
         mtu_blackhole: 0.25
-        client_local_issue: 0.25
+        client_local_issue: 0.65
       target_down_externally:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
-        path_change_degraded: 0.25
+        routing_blackhole: 0.313157895
+        path_change_degraded: 0.116666667
         congestion_loss: 0.25
-        server_down: 0.25
+        server_down: 0.421428571
         app_layer_error: 0.25
         tls_failure: 0.25
-        waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
+        waf_or_rate_limited: 0.116666667
+        local_vantage_bad: 0.116666667
         mtu_blackhole: 0.25
-        client_local_issue: 0.25
+        client_local_issue: 0.116666667
       partial_by_region:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
-        path_change_degraded: 0.25
+        routing_blackhole: 0.313157895
+        path_change_degraded: 0.65
         congestion_loss: 0.25
-        server_down: 0.25
+        server_down: 0.078571429
         app_layer_error: 0.25
         tls_failure: 0.25
-        waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
+        waf_or_rate_limited: 0.65
+        local_vantage_bad: 0.116666667
         mtu_blackhole: 0.25
-        client_local_issue: 0.25
+        client_local_issue: 0.116666667
       unavailable:
         dns_failure: 0.25
         auth_ns_down: 0.25
-        routing_blackhole: 0.25
-        path_change_degraded: 0.25
+        routing_blackhole: 0.313157895
+        path_change_degraded: 0.116666667
         congestion_loss: 0.25
-        server_down: 0.25
+        server_down: 0.421428571
         app_layer_error: 0.25
         tls_failure: 0.25
-        waf_or_rate_limited: 0.25
-        local_vantage_bad: 0.25
+        waf_or_rate_limited: 0.116666667
+        local_vantage_bad: 0.116666667
         mtu_blackhole: 0.25
-        client_local_issue: 0.25
+        client_local_issue: 0.116666667
   mtu_behaviour:
     cost_seconds: 4.0
     table:
       normal:
-        dns_failure: 0.333333
-        auth_ns_down: 0.333333
-        routing_blackhole: 0.333333
-        path_change_degraded: 0.333333
-        congestion_loss: 0.333333
-        server_down: 0.333333
-        app_layer_error: 0.333333
-        tls_failure: 0.333333
-        waf_or_rate_limited: 0.333333
-        local_vantage_bad: 0.333333
-        mtu_blackhole: 0.333333
-        client_local_issue: 0.333333
+        dns_failure: 0.333333333
+        auth_ns_down: 0.333333333
+        routing_blackhole: 0.13125
+        path_change_degraded: 0.333333333
+        congestion_loss: 0.13125
+        server_down: 0.333333333
+        app_layer_error: 0.333333333
+        tls_failure: 0.333333333
+        waf_or_rate_limited: 0.333333333
+        local_vantage_bad: 0.333333333
+        mtu_blackhole: 0.13125
+        client_local_issue: 0.333333333
       large_packets_fail:
-        dns_failure: 0.333333
-        auth_ns_down: 0.333333
-        routing_blackhole: 0.333333
-        path_change_degraded: 0.333333
-        congestion_loss: 0.333333
-        server_down: 0.333333
-        app_layer_error: 0.333333
-        tls_failure: 0.333333
-        waf_or_rate_limited: 0.333333
-        local_vantage_bad: 0.333333
-        mtu_blackhole: 0.333333
-        client_local_issue: 0.333333
+        dns_failure: 0.333333333
+        auth_ns_down: 0.333333333
+        routing_blackhole: 0.7375
+        path_change_degraded: 0.333333333
+        congestion_loss: 0.7375
+        server_down: 0.333333333
+        app_layer_error: 0.333333333
+        tls_failure: 0.333333333
+        waf_or_rate_limited: 0.333333333
+        local_vantage_bad: 0.333333333
+        mtu_blackhole: 0.7375
+        client_local_issue: 0.333333333
       not_tested:
-        dns_failure: 0.333334
-        auth_ns_down: 0.333334
-        routing_blackhole: 0.333334
-        path_change_degraded: 0.333334
-        congestion_loss: 0.333334
-        server_down: 0.333334
-        app_layer_error: 0.333334
-        tls_failure: 0.333334
-        waf_or_rate_limited: 0.333334
-        local_vantage_bad: 0.333334
-        mtu_blackhole: 0.333334
-        client_local_issue: 0.333334
+        dns_failure: 0.333333333
+        auth_ns_down: 0.333333333
+        routing_blackhole: 0.13125
+        path_change_degraded: 0.333333333
+        congestion_loss: 0.13125
+        server_down: 0.333333333
+        app_layer_error: 0.333333333
+        tls_failure: 0.333333333
+        waf_or_rate_limited: 0.333333333
+        local_vantage_bad: 0.333333333
+        mtu_blackhole: 0.13125
+        client_local_issue: 0.333333333

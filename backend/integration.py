@@ -581,7 +581,6 @@ def run_investigation(
     )
 
     dns = current_data.get("dns", {})
-
     http = current_data.get("http", {})
 
     return {
@@ -613,6 +612,7 @@ def run_investigation(
             "error": http.get("error"),
         },
         "currentPath": formatted_path,
+        "rawPath": current_data.get("path", []),
         "previousPath": (
             _format_path(
                 previous_data.get("path", [])
