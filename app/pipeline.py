@@ -412,8 +412,7 @@ async def run_diagnosis(
 ) -> dict[str, Any]:
     """Run one target through Person 2 comparison + the Person 3 engine.
 
-    Returns the combined result already shaped for the frontend
-    (see src/data/mockInvestigation.js for the target shape). The
+    Returns the combined result already shaped for the frontend. The
     diagnosis/hypotheses/evidence fields come from Person 3's own
     exporter.export_investigation(), not reimplemented here -- except when
     the target is healthy, in which case the engine is skipped (see
