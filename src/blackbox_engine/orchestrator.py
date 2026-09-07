@@ -98,6 +98,15 @@ class Investigation:
         budget_s: float = 30.0,
         threshold: float = 0.85,
     ) -> None:
+        if budget_s <= 0:
+            raise ValueError(f"budget_s must be > 0, got {budget_s!r}")
+        if not 0.0 < threshold <= 1.0:
+            raise ValueError(
+                f"threshold must be within (0.0, 1.0], got {threshold!r}; a threshold "
+                "<= 0 would report the prior itself as a confident verdict before any "
+                "evidence is gathered"
+            )
+
         self.target = target
         self.spec = spec
         self.probe_runner = probe_runner

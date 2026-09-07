@@ -11,6 +11,9 @@ dependencies = [
     "matplotlib",
 ]
 
+[project.scripts]
+blackbox = "blackbox_engine.cli:main"
+
 [dependency-groups]
 dev = [
     "pytest",
