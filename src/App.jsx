@@ -324,14 +324,6 @@ function LaunchScreen({
 
         </div>
 
-        <div className="online-indicator">
-
-          <span />
-
-          ONLINE
-
-        </div>
-
       </header>
 
       {/* =================================================
@@ -482,63 +474,7 @@ function LaunchScreen({
 
       </section>
 
-      {/* =================================================
-
-          WHAT IT CHECKS
-
-      ================================================= */}
-
-      <CapabilitiesRow />
-
-      <div className="launch-footer">
-
-        // A CLEARER INTERNET FOR EVERYONE //
-
-      </div>
-
     </main>
-
-  );
-
-}
-
-/* =========================================================
-
-   CAPABILITIES ROW
-   ---------------------------------------------------------
-   A plain, static list of what the engine actually checks --
-   not a fake "live" panel pretending to show activity that
-   isn't happening yet.
-
-========================================================= */
-
-function CapabilitiesRow() {
-
-  const checks = [
-    "DNS",
-    "HTTP",
-    "TCP",
-    "TLS",
-    "TRACEROUTE",
-    "ANOMALY DETECTION",
-    "DIAGNOSIS",
-  ];
-
-  return (
-
-    <div className="capabilities-row">
-
-      {checks.map((check) => (
-
-        <span key={check} className="capability-chip">
-
-          {check}
-
-        </span>
-
-      ))}
-
-    </div>
 
   );
 
@@ -3846,22 +3782,6 @@ function FinalResult({
 
     result.pathComparison;
 
-  const anomalies =
-
-    result.anomalies || [];
-
-  const overallStatus =
-
-    comparison?.status ===
-
-      "degraded" ||
-
-    anomalies.length > 0
-
-      ? "DEGRADED"
-
-      : "NORMAL";
-
  const pathStatusLabel =
 !pathComparison || !pathComparison.status
 ? "UNKNOWN"
@@ -3921,32 +3841,6 @@ function FinalResult({
             <strong>
 
               {target}
-
-            </strong>
-
-          </div>
-
-          <div>
-
-            <span>STATUS</span>
-
-            <strong
-
-              className={
-
-                overallStatus ===
-
-                "DEGRADED"
-
-                  ? "status-degraded"
-
-                  : "status-normal"
-
-              }
-
-            >
-
-              {overallStatus}
 
             </strong>
 

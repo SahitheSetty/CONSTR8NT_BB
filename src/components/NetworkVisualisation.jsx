@@ -12,10 +12,15 @@ function NetworkNode({
 }) {
   const [hovered, setHovered] = useState(false);
 
+  // Trust the backend's anomaly classification -- it deliberately excludes
+  // hops that simply didn't respond (packetLoss reads 100 for those, but a
+  // router silently dropping ICMP TTL-exceeded is normal traceroute
+  // behavior, not a real problem). Re-deriving "anomalous" from packetLoss
+  // here would flag every unresponsive hop regardless of the backend's
+  // judgment.
   const isAnomalous =
     hop?.status === "anomalous" ||
-    hop?.anomaly ||
-    hop?.packetLoss > 5;
+    Boolean(hop?.anomaly);
 
   const nodeColor = isDestination
     ? "#ffffff"
@@ -256,13 +261,13 @@ function NetworkScene({
         const nextSelected =
           selectedHop?.ip === nextHop?.ip;
 
+        // See the matching note in NetworkNode -- trust the backend's
+        // classification instead of re-deriving it from packetLoss.
         const anomalous =
           hop?.status === "anomalous" ||
-          hop?.anomaly ||
-          hop?.packetLoss > 5 ||
+          Boolean(hop?.anomaly) ||
           nextHop?.status === "anomalous" ||
-          nextHop?.anomaly ||
-          nextHop?.packetLoss > 5;
+          Boolean(nextHop?.anomaly);
 
         return (
           <NetworkConnection
