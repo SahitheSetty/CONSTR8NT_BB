@@ -246,7 +246,23 @@ async def _main_async(argv: list[str] | None = None) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    return asyncio.run(_main_async(argv))
+    # A real failure here (bad --spec/--replay path, malformed JSON/YAML, an
+    # upstream shape the adapter can't answer) must never dump a raw
+    # traceback mid-demo -- cli.py is the explicit backup plan if the React
+    # frontend or venue wifi dies, so it has to fail *legibly* in front of
+    # an audience. SystemExit/KeyboardInterrupt aren't Exception subclasses,
+    # so argparse's own usage errors and Ctrl-C still behave normally.
+    try:
+        return asyncio.run(_main_async(argv))
+    except Exception as exc:  # noqa: BLE001 -- outermost boundary: re-displayed below, not swallowed
+        Console(stderr=True).print(
+            Panel(
+                f"[bold red]{type(exc).__name__}:[/bold red] {exc}",
+                title="investigation failed",
+                border_style="red",
+            )
+        )
+        return 1
 
 
 if __name__ == "__main__":

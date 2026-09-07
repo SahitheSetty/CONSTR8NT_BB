@@ -7,6 +7,7 @@ from blackbox_engine.evaluation import (
     calibration_curve,
     confusion_matrix,
     evaluate,
+    main,
     observation_efficiency,
     overall_accuracy,
     plot_calibration_curve,
@@ -183,3 +184,12 @@ async def test_evaluate_bundles_every_metric_consistently(calibrated_spec):
     assert report.overall_accuracy == overall_accuracy(report.results)
     assert list(report.confusion.index) == list(calibrated_spec.hypotheses)
     assert report.observation_efficiency["total_available_probes"] == len(calibrated_spec.likelihoods)
+
+
+def test_main_reports_bad_spec_path_cleanly_instead_of_a_traceback(capsys):
+    exit_code = main(["--spec", "no_such_file.yaml", "--n-per-hypothesis", "1"])
+
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    assert "no_such_file.yaml" in captured.err
+    assert "Traceback" not in captured.err

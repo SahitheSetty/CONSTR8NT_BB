@@ -12,6 +12,7 @@ from blackbox_engine.cli import (
     _parse_args,
     _resolve_target,
     _run_investigation,
+    main,
 )
 from blackbox_engine.mocks import SCENARIOS, ReplayMock, ScenarioMock
 from blackbox_engine.orchestrator import Alternative, Investigation, Verdict
@@ -159,3 +160,55 @@ async def test_main_async_runs_end_to_end_with_bundled_spec(capsys):
     captured = capsys.readouterr()
     assert "verdict" in captured.out
     assert "stop reason" in captured.out
+
+
+def test_main_reports_bad_spec_path_cleanly_instead_of_a_traceback(capsys):
+    exit_code = main(["example.com", "--scenario", "dns_failure", "--spec", "no_such_file.yaml"])
+
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    assert "no_such_file.yaml" in captured.err
+    assert "Traceback" not in captured.err
+
+
+def test_main_reports_malformed_replay_json_cleanly(tmp_path, capsys):
+    replay_file = tmp_path / "replay.json"
+    replay_file.write_text("{not valid json")
+
+    exit_code = main(["--replay", str(replay_file)])
+
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    assert "Traceback" not in captured.err
+
+
+def test_main_reports_spec_validation_failure_cleanly(tmp_path, capsys):
+    fixtures = Path(__file__).parent / "fixtures"
+    bad_spec = fixtures / "spec_bad_column_sum.yaml"
+
+    exit_code = main(["example.com", "--scenario", "dns_failure", "--spec", str(bad_spec)])
+
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    assert "AssertionError" in captured.err
+    assert "Traceback" not in captured.err
+
+
+def test_main_reports_a_probe_the_adapter_cannot_answer_cleanly(tmp_path, capsys):
+    fixtures = Path(__file__).parent / "fixtures"
+    p1 = json.loads((fixtures / "p1_sample.json").read_text())
+    p2 = json.loads((fixtures / "p2_sample.json").read_text())
+    replay_file = tmp_path / "replay.json"
+    replay_file.write_text(json.dumps({"p1_raw": p1, "p2_analysis": p2}))
+
+    # threshold=0.999999 with a wide budget forces the engine deep enough
+    # into the probe list to hit mtu_behaviour, which the adapter has no
+    # mapping for -- ReplayMock's own KeyError should surface cleanly.
+    exit_code = main(
+        ["--replay", str(replay_file), "--threshold", "0.999999", "--budget", "120"]
+    )
+
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    assert "KeyError" in captured.err
+    assert "Traceback" not in captured.err

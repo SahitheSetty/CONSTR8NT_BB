@@ -282,7 +282,11 @@ async def _main_async(argv: list[str] | None = None) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    return asyncio.run(_main_async(argv))
+    try:
+        return asyncio.run(_main_async(argv))
+    except Exception as exc:  # noqa: BLE001 -- outermost boundary: re-displayed below, not swallowed
+        print(f"error: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":
