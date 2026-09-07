@@ -66,7 +66,7 @@ def investigate(request: InvestigationRequest):
             "investigationId": result["investigationId"],
             "dns": result["dns"],
             "http": result["http"],
-            "path": result["currentPath"],
+            "path": result["rawPath"],
             "status": result["status"],
             "errors": result["errors"],
         }

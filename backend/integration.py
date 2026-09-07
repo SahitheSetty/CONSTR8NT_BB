@@ -18,10 +18,18 @@ SPEC_PATH = (
 )
 
 
-def _format_path(path: list[dict]) -> list[dict]:
+def _format_path(path: list) -> list[dict]:
     formatted = []
 
     for hop in path or []:
+        if hasattr(hop, "model_dump"):
+            hop = hop.model_dump()
+        elif hasattr(hop, "dict"):
+            hop = hop.dict()
+
+        if not isinstance(hop, dict):
+            continue
+
         hop_number = hop.get("hop", hop.get("hopNumber"))
         ip = hop.get("ip")
         hostname = hop.get("hostname")
@@ -79,15 +87,37 @@ def _build_path_comparison(
     previous_path = previous_data.get("path", [])
     current_path = current_data.get("path", [])
 
+    normalized_previous_path = []
+
+    for hop in previous_path:
+        if hasattr(hop, "model_dump"):
+            hop = hop.model_dump()
+        elif hasattr(hop, "dict"):
+            hop = hop.dict()
+
+        if isinstance(hop, dict):
+            normalized_previous_path.append(hop)
+
+    normalized_current_path = []
+
+    for hop in current_path:
+        if hasattr(hop, "model_dump"):
+            hop = hop.model_dump()
+        elif hasattr(hop, "dict"):
+            hop = hop.dict()
+
+        if isinstance(hop, dict):
+            normalized_current_path.append(hop)
+
     previous_ips = [
         hop.get("ip")
-        for hop in previous_path
+        for hop in normalized_previous_path
         if hop.get("ip")
     ]
 
     current_ips = [
         hop.get("ip")
-        for hop in current_path
+        for hop in normalized_current_path
         if hop.get("ip")
     ]
 
@@ -109,7 +139,10 @@ def _build_path_comparison(
     divergence_point = None
 
     for index, (previous_hop, current_hop) in enumerate(
-        zip(previous_path, current_path),
+        zip(
+            normalized_previous_path,
+            normalized_current_path,
+        ),
         start=1,
     ):
         if previous_hop.get("ip") != current_hop.get("ip"):
@@ -117,11 +150,12 @@ def _build_path_comparison(
             break
 
     if divergence_point is None and (
-        len(previous_path) != len(current_path)
+        len(normalized_previous_path)
+        != len(normalized_current_path)
     ):
         divergence_point = min(
-            len(previous_path),
-            len(current_path),
+            len(normalized_previous_path),
+            len(normalized_current_path),
         ) + 1
 
     path_changed = bool(
@@ -162,6 +196,23 @@ def _build_performance_comparison(
 
     previous_path = previous_data.get("path", [])
     current_path = current_data.get("path", [])
+
+    def normalize_path(path):
+        normalized = []
+
+        for hop in path:
+            if hasattr(hop, "model_dump"):
+                hop = hop.model_dump()
+            elif hasattr(hop, "dict"):
+                hop = hop.dict()
+
+            if isinstance(hop, dict):
+                normalized.append(hop)
+
+        return normalized
+
+    previous_path = normalize_path(previous_path)
+    current_path = normalize_path(current_path)
 
     def final_rtt(path):
         values = [
@@ -301,9 +352,19 @@ def _build_anomalies(
 
     path = current_data.get("path", [])
 
+    normalized_path = []
+
     for hop in path:
+        if hasattr(hop, "model_dump"):
+            hop = hop.model_dump()
+        elif hasattr(hop, "dict"):
+            hop = hop.dict()
+
+        if isinstance(hop, dict):
+            normalized_path.append(hop)
+
+    for hop in normalized_path:
         rtt = hop.get("rttMs")
-        packet_loss = hop.get("packetLossPercent", 0)
 
         if rtt is not None and rtt >= 200:
             anomalies.append(
@@ -318,11 +379,20 @@ def _build_anomalies(
                 }
             )
 
+    if normalized_path:
+        final_hop = normalized_path[-1]
+
+        packet_loss = final_hop.get(
+            "packetLossPercent"
+        )
+
         if packet_loss is not None and packet_loss >= 10:
             anomalies.append(
                 {
                     "type": "Packet loss",
-                    "location": f"Hop {hop.get('hop')}",
+                    "location": (
+                        f"Hop {final_hop.get('hop')}"
+                    ),
                     "severity": "high",
                     "measurement": (
                         f"{packet_loss:.0f}% packet loss"
@@ -330,7 +400,7 @@ def _build_anomalies(
                     "evidence": [
                         (
                             f"{packet_loss:.0f}% packet loss "
-                            "observed"
+                            "observed at destination"
                         )
                     ],
                 }
@@ -348,7 +418,6 @@ def _build_evidence(
 
     dns = current_data.get("dns", {})
     http = current_data.get("http", {})
-    path = current_data.get("path", [])
 
     if dns.get("resolved"):
         addresses = dns.get("addresses", [])

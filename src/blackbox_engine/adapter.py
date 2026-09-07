@@ -40,6 +40,11 @@ def to_observations(
     """
     observations = {
         "dns_resolution": _dns_resolution(p1_raw),
+        "dns_consistency": _unmeasured(
+            "dns_consistency",
+            "Person 1 does not currently provide multi-resolver DNS consistency data",
+            p1_raw.get("dns"),
+        ),
         "tcp_443": _tcp(p1_raw, "443"),
         "tcp_80": _tcp(p1_raw, "80"),
         "tls_handshake": _tls_handshake(p1_raw),
@@ -48,6 +53,16 @@ def to_observations(
         "latency_profile": _latency_profile(p1_raw, p2_analysis),
         "path_change": _path_change(p2_analysis),
         "path_reachability": _path_reachability(p1_raw),
+        "external_vantage": _unmeasured(
+            "external_vantage",
+            "Person 1 and Person 2 do not currently provide external-vantage measurements",
+            {},
+        ),
+        "mtu_behaviour": _unmeasured(
+            "mtu_behaviour",
+            "Person 1 does not currently provide MTU behaviour measurements",
+            {},
+        ),
     }
 
     for observation in observations.values():
