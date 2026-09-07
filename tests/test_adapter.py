@@ -33,11 +33,19 @@ def test_complete_input_produces_expected_symbols(p1_raw, p2_analysis):
         "path_change": "unchanged",
         "path_reachability": "complete",
     }
-    assert set(observations) == set(expected)
+    # dns_consistency/external_vantage/mtu_behaviour have no live mapping yet;
+    # to_observations() still returns them, always unmeasured, so every probe
+    # in OBSERVATION_SPACE has an entry rather than silently missing one.
+    always_unmeasured = {"dns_consistency", "external_vantage", "mtu_behaviour"}
+    assert set(observations) == set(expected) | always_unmeasured
     for probe_id, symbol in expected.items():
         obs = observations[probe_id]
         assert obs.symbol == symbol
         assert obs.measured is True
+    for probe_id in always_unmeasured:
+        obs = observations[probe_id]
+        assert obs.symbol is None
+        assert obs.measured is False
 
 
 def test_every_returned_observation_passes_validate(p1_raw, p2_analysis):

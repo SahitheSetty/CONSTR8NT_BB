@@ -203,6 +203,29 @@ async def test_replay_mock_reproduces_the_same_verdict_as_scenario_mock(calibrat
     assert [e.probe for e in verdict_a.evidence] == [e.probe for e in verdict_b.evidence]
 
 
+@pytest.mark.parametrize("bad_budget_s", [0.0, -1.0])
+def test_non_positive_budget_raises(calibrated_spec, bad_budget_s):
+    mock = ScenarioMock(SCENARIOS["server_down"], latency_ms=0.0)
+    with pytest.raises(ValueError, match="budget_s must be > 0"):
+        Investigation("example.com", calibrated_spec, mock, budget_s=bad_budget_s, threshold=0.85)
+
+
+@pytest.mark.parametrize("bad_threshold", [0.0, -0.5, 1.5])
+def test_threshold_outside_zero_to_one_raises(calibrated_spec, bad_threshold):
+    # A threshold <= 0 would otherwise report the prior itself as a
+    # "confident" verdict before a single probe runs -- silently wrong,
+    # not a crash, which is worse.
+    mock = ScenarioMock(SCENARIOS["server_down"], latency_ms=0.0)
+    with pytest.raises(ValueError, match="threshold must be within"):
+        Investigation("example.com", calibrated_spec, mock, budget_s=30.0, threshold=bad_threshold)
+
+
+def test_threshold_of_exactly_one_is_allowed(calibrated_spec):
+    mock = ScenarioMock(SCENARIOS["server_down"], latency_ms=0.0)
+    investigation = Investigation("example.com", calibrated_spec, mock, budget_s=30.0, threshold=1.0)
+    assert investigation.threshold == 1.0
+
+
 async def test_single_probe_investigation_emits_expected_event_shapes():
     # tcp_443 is a real probe with no precondition of its own, so it stays
     # freely eligible; its table here only needs the two symbols this test

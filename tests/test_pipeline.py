@@ -23,14 +23,13 @@ def _make_result(*, tcp_status="open", tls_handshake="ok", packet_loss=0.0, rtt=
     )
 
 
-def test_normalize_for_adapter_renames_fields_and_marks_last_hop_destination():
+def test_normalize_for_adapter_passes_path_through_in_person1s_own_field_names():
     result = _make_result()
 
     raw = normalize_for_adapter(result)
 
-    assert raw["hops"][0]["rtt_ms"] == 2.1
-    assert raw["hops"][0]["isDestination"] is False
-    assert raw["hops"][1]["isDestination"] is True
+    assert raw["path"][0]["rttMs"] == 2.1
+    assert raw["path"][1]["rttMs"] == 24.7
     assert raw["tcp"]["443"]["status"] == "open"
     assert raw["tls"]["handshake"] == "ok"
 
@@ -42,15 +41,6 @@ def test_normalize_for_adapter_omits_tcp_tls_blocks_when_uncollected():
 
     assert "tcp" not in raw
     assert "tls" not in raw
-
-
-def test_normalize_for_adapter_marks_error_hop_as_not_destination():
-    result = _make_result()
-    result.path[-1] = Hop(hop=2, ip=None, hostname=None, rttMs=None, packetLossPercent=100.0, error="Request timed out")
-
-    raw = normalize_for_adapter(result)
-
-    assert raw["hops"][-1]["isDestination"] is False
 
 
 def test_build_p2_for_adapter_no_baseline():
@@ -95,3 +85,27 @@ async def test_live_probe_runner_reports_unmapped_probes_as_unmeasured():
     assert observation.measured is False
     assert observation.symbol is None
     observation.validate()
+
+
+@pytest.mark.asyncio
+async def test_live_probe_runner_derives_packet_loss_from_persons1s_path_field():
+    result = _make_result(packet_loss=0.0)
+    raw = normalize_for_adapter(result)
+    runner = LiveProbeRunner(raw, {"baselineAvailable": False})
+
+    observation = await runner("packet_loss", "example.com")
+
+    assert observation.measured is True
+    assert observation.symbol == "none"
+
+
+@pytest.mark.asyncio
+async def test_live_probe_runner_derives_latency_profile_from_persons1s_path_field():
+    result = _make_result(rtt=300.0)
+    raw = normalize_for_adapter(result)
+    runner = LiveProbeRunner(raw, {"baselineAvailable": False})
+
+    observation = await runner("latency_profile", "example.com")
+
+    assert observation.measured is True
+    assert observation.symbol == "severe"

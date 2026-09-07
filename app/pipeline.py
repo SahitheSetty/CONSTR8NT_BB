@@ -5,7 +5,10 @@ This is the only module that knows about all three layers at once. Each
 layer stays ignorant of the others -- Person 1 never sees hypotheses,
 the diagnosis engine never parses raw text (see CLAUDE.md) -- and this
 module is where their three independently-designed JSON contracts get
-translated into each other.
+translated into each other. The diagnosis/hypotheses/evidence fields
+themselves are Person 3's own (blackbox_engine.exporter) -- this module
+only adds the path/performance/anomaly visualisation data exporter.py
+doesn't own.
 """
 
 from __future__ import annotations
@@ -15,38 +18,28 @@ from typing import Any
 from app.models import InvestigationResult
 from backend.person2.path_analysis import compare_paths
 from blackbox_engine.adapter import to_observations
+from blackbox_engine.exporter import export_investigation
 from blackbox_engine.orchestrator import BeliefUpdated, Investigation, ProbeUnmeasured, Verdict
 from blackbox_engine.spec_loader import Spec
 from blackbox_engine.symbols import Observation
 
-_CONFIDENCE_HIGH = 0.7
-_CONFIDENCE_MEDIUM = 0.4
+_HIGH_LATENCY_RTT_MS = 200.0
+_HIGH_PACKET_LOSS_PERCENT = 10.0
 
 
 def normalize_for_adapter(result: InvestigationResult) -> dict[str, Any]:
     """Translate Person 1's InvestigationResult into the raw shape adapter.py expects.
 
-    Person 1's collectors and adapter.py were built against slightly
-    different field-naming conventions (rttMs vs rtt_ms, "path" vs
-    "hops"); this is the one place that gap gets closed.
+    adapter.py accepts both its original fixture contract (hops/rtt_ms) and
+    Person 1's live field names (path/rttMs) directly, so the only real gap
+    left to close here is TCP/TLS: Person 1 stores those as flat
+    tcp443/tcp80/tls fields, not the nested {"tcp": {"443": ...}} shape
+    adapter.py's _tcp()/_tls_handshake() look for.
     """
-    hops = []
-    last_index = len(result.path) - 1
-    for index, hop in enumerate(result.path):
-        hops.append({
-            "hop": hop.hop,
-            "ip": hop.ip,
-            "hostname": hop.hostname,
-            "rtt_ms": hop.rttMs,
-            "packetLossPercent": hop.packetLossPercent,
-            "isDestination": index == last_index and hop.error is None,
-            "error": hop.error,
-        })
-
     raw: dict[str, Any] = {
         "dns": result.dns.model_dump(),
         "http": result.http.model_dump(),
-        "hops": hops,
+        "path": [hop.model_dump() for hop in result.path],
     }
 
     if result.tcp443.status is not None or result.tcp80.status is not None:
@@ -100,9 +93,9 @@ class LiveProbeRunner:
     Person 1's collectors run once, up front -- a live network probe
     can't be re-issued mid-investigation the way a mock replay can --
     and each probe the orchestrator asks for is served from the
-    resulting Observation dict. Probes adapter.py has no live mapping
-    for yet (dns_consistency, external_vantage, mtu_behaviour) always
-    come back unmeasured: never a guessed symbol.
+    resulting Observation dict. adapter.py's to_observations() already
+    returns all 12 probes (unmapped ones as explicit unmeasured
+    entries), so the fallback below is defensive only.
     """
 
     def __init__(self, p1_raw: dict[str, Any], p2_analysis: dict[str, Any] | None) -> None:
@@ -120,14 +113,6 @@ class LiveProbeRunner:
             raw={},
             note=f"probe {probe_id!r} has no live collector wired up yet",
         )
-
-
-def _confidence_bucket(probability: float) -> str:
-    if probability >= _CONFIDENCE_HIGH:
-        return "HIGH"
-    if probability >= _CONFIDENCE_MEDIUM:
-        return "MEDIUM"
-    return "LOW"
 
 
 def _hop_by_number(result: InvestigationResult) -> dict[int, Any]:
@@ -150,15 +135,7 @@ def _to_ui_hop(hop: Any, *, is_destination: bool, anomaly: dict[str, Any] | None
     }
 
 
-def _build_current_path(current: InvestigationResult, person2_result: dict[str, Any] | None) -> list[dict[str, Any]]:
-    anomalies_by_hop: dict[int, dict[str, Any]] = {}
-    if person2_result:
-        for anomaly in person2_result.get("anomalies", []):
-            anomalies_by_hop[anomaly["hop"]] = {
-                "type": anomaly["type"].replace("_", " ").title(),
-                "severity": "high",
-            }
-
+def _build_current_path(current: InvestigationResult, anomalies_by_hop: dict[int, dict[str, Any]]) -> list[dict[str, Any]]:
     last_index = len(current.path) - 1
     return [
         _to_ui_hop(
@@ -265,48 +242,90 @@ def _build_performance_comparison(
     }
 
 
-def _probe_label(probe_id: str) -> str:
-    return probe_id.replace("_", " ").upper()
+def _compare_anomaly_measurement(anomaly: dict[str, Any]) -> str:
+    if anomaly["type"] == "LATENCY_SPIKE":
+        return f"{anomaly['rttDeltaMs']} ms RTT increase"
+    if anomaly["type"] == "PACKET_LOSS_SPIKE":
+        return f"{anomaly['packetLossDeltaPercent']}% packet loss increase"
+    return anomaly["type"].replace("_", " ").title()
 
 
-def _build_evidence(verdict: Verdict) -> list[str]:
-    return [
-        f"{_probe_label(entry.probe)}: {entry.symbol}"
-        for entry in verdict.evidence
-        if entry.measured
+def _direct_anomalies(current: InvestigationResult) -> list[dict[str, Any]]:
+    """Anomalies visible from this run alone, independent of any baseline.
+
+    Person 2's anomalies only exist when there's a previous run to compare
+    against; a first-ever investigation of an already-degraded target would
+    otherwise report zero anomalies no matter how bad the numbers are.
+    """
+    found = []
+    for hop in current.path:
+        if hop.rttMs is not None and hop.rttMs >= _HIGH_LATENCY_RTT_MS:
+            found.append({
+                "hop": hop.hop,
+                "type": "HIGH_LATENCY",
+                "measurement": f"{hop.rttMs:.0f} ms RTT",
+            })
+
+    if current.path:
+        final_hop = current.path[-1]
+        if (
+            final_hop.packetLossPercent is not None
+            and final_hop.packetLossPercent >= _HIGH_PACKET_LOSS_PERCENT
+        ):
+            found.append({
+                "hop": final_hop.hop,
+                "type": "PACKET_LOSS",
+                "measurement": f"{final_hop.packetLossPercent:.0f}% packet loss",
+            })
+
+    return found
+
+
+def _build_anomalies(
+    current: InvestigationResult,
+    person2_result: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    compare_anomalies = person2_result.get("anomalies", []) if person2_result else []
+    already_flagged_hops = {anomaly["hop"] for anomaly in compare_anomalies}
+    direct_anomalies = [
+        anomaly for anomaly in _direct_anomalies(current)
+        if anomaly["hop"] not in already_flagged_hops
     ]
 
-
-def _build_hypotheses(spec: Spec, verdict: Verdict, evidence: list[str]) -> list[dict[str, Any]]:
-    hypotheses = [
+    ui_anomalies = [
         {
-            "type": "Inference",
-            "description": spec.hypotheses[verdict.top_hypothesis].label,
-            "confidence": _confidence_bucket(verdict.confidence),
-            "evidence": evidence[:3],
-        }
-    ]
-    hypotheses.extend(
-        {
-            "type": "Alternative hypothesis",
-            "description": spec.hypotheses[name].label,
-            "confidence": _confidence_bucket(probability),
+            "type": anomaly["type"].replace("_", " ").title(),
+            "location": f"Hop {anomaly['hop']}",
+            "severity": "high",
+            "measurement": _compare_anomaly_measurement(anomaly),
             "evidence": [],
         }
-        for name, probability in verdict.runners_up
+        for anomaly in compare_anomalies
+    ]
+    ui_anomalies.extend(
+        {
+            "type": anomaly["type"].replace("_", " ").title(),
+            "location": f"Hop {anomaly['hop']}",
+            "severity": "high",
+            "measurement": anomaly["measurement"],
+            "evidence": [],
+        }
+        for anomaly in direct_anomalies
     )
-    return hypotheses
+    return ui_anomalies
 
 
-def _build_diagnosis(spec: Spec, verdict: Verdict, evidence: list[str]) -> dict[str, Any]:
-    return {
-        "probableCause": spec.hypotheses[verdict.top_hypothesis].label,
-        "confidence": _confidence_bucket(verdict.confidence),
-        "supportingEvidence": evidence,
-        "alternativeHypotheses": [
-            spec.hypotheses[name].label for name, _ in verdict.runners_up
-        ],
-    }
+def _anomalies_by_hop(anomalies: list[dict[str, Any]]) -> dict[int, dict[str, Any]]:
+    by_hop: dict[int, dict[str, Any]] = {}
+    for anomaly in anomalies:
+        hop_number = int(anomaly["location"].removeprefix("Hop ")) if anomaly["location"].startswith("Hop ") else None
+        if hop_number is not None:
+            by_hop[hop_number] = {"type": anomaly["type"], "severity": anomaly["severity"]}
+    return by_hop
+
+
+def _probe_label(probe_id: str) -> str:
+    return probe_id.replace("_", " ").lower()
 
 
 def _build_timeline(events: list[Any]) -> list[dict[str, Any]]:
@@ -314,12 +333,12 @@ def _build_timeline(events: list[Any]) -> list[dict[str, Any]]:
     for event in events:
         if isinstance(event, BeliefUpdated):
             timeline.append({
-                "event": f"Observed {_probe_label(event.probe).lower()}: {event.symbol}",
+                "event": f"Observed {_probe_label(event.probe)}: {event.symbol}",
                 "status": "completed",
             })
         elif isinstance(event, ProbeUnmeasured):
             timeline.append({
-                "event": f"{_probe_label(event.probe).lower()} could not be measured",
+                "event": f"{_probe_label(event.probe)} could not be measured",
                 "status": "completed",
             })
         elif isinstance(event, Verdict):
@@ -338,7 +357,9 @@ async def run_diagnosis(
     """Run one target through Person 2 comparison + the Person 3 engine.
 
     Returns the combined result already shaped for the frontend
-    (see src/data/mockInvestigation.js for the target shape).
+    (see src/data/mockInvestigation.js for the target shape). The
+    diagnosis/hypotheses/evidence fields come from Person 3's own
+    exporter.export_investigation(), not reimplemented here.
     """
     person2_result = None
     if baseline is not None:
@@ -354,7 +375,8 @@ async def run_diagnosis(
     verdict = events[-1]
     assert isinstance(verdict, Verdict)
 
-    evidence = _build_evidence(verdict)
+    exported = export_investigation(events, spec)
+    anomalies = _build_anomalies(current, person2_result)
 
     return {
         "id": current.investigationId,
@@ -371,30 +393,22 @@ async def run_diagnosis(
             "responseTime": current.http.responseTimeMs,
             "statusCode": current.http.status,
         },
-        "currentPath": _build_current_path(current, person2_result),
+        "currentPath": _build_current_path(current, _anomalies_by_hop(anomalies)),
         "previousPath": _build_previous_path(baseline),
         "pathComparison": _build_path_comparison(baseline, current, person2_result),
         "performanceComparison": _build_performance_comparison(baseline, current),
-        "anomalies": [
+        "anomalies": anomalies,
+        "evidence": exported["evidence"],
+        "hypotheses": [
             {
-                "type": anomaly["type"].replace("_", " ").title(),
-                "location": f"Hop {anomaly['hop']}",
-                "severity": "high",
-                "measurement": _anomaly_measurement(anomaly),
-                "evidence": [],
+                "type": "Inference" if index == 0 else "Alternative hypothesis",
+                "hypothesis": hypothesis["hypothesis"],
+                "confidence": hypothesis["confidence"],
+                "reason": hypothesis["reason"],
             }
-            for anomaly in (person2_result.get("anomalies", []) if person2_result else [])
+            for index, hypothesis in enumerate(exported["hypotheses"])
         ],
-        "evidence": evidence,
-        "hypotheses": _build_hypotheses(spec, verdict, evidence),
-        "diagnosis": _build_diagnosis(spec, verdict, evidence),
+        "diagnosis": exported["diagnosis"],
+        "reasoningTrace": exported["reasoningTrace"],
         "timeline": _build_timeline(events),
     }
-
-
-def _anomaly_measurement(anomaly: dict[str, Any]) -> str:
-    if anomaly["type"] == "LATENCY_SPIKE":
-        return f"{anomaly['rttDeltaMs']} ms RTT increase"
-    if anomaly["type"] == "PACKET_LOSS_SPIKE":
-        return f"{anomaly['packetLossDeltaPercent']}% packet loss increase"
-    return anomaly["type"].replace("_", " ").title()

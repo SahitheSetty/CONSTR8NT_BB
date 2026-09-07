@@ -1,13 +1,12 @@
-@"
 __pycache__/
 *.py[cod]
-*.pyc
 .pytest_cache/
 .ruff_cache/
 *.egg-info/
 .venv/
 venv/
 .env
-reports/*.png
 node_modules/
-"@ | Set-Content .gitignore
+dist/
+reports/*.png
+reports/*.csv

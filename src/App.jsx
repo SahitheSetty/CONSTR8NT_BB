@@ -85,29 +85,37 @@ function App() {
 
       try {
 
-        const currentStatus =
-
-          getInvestigationStatus(investigationId);
+        const currentStatus = getInvestigationStatus(investigationId);
 
         setStage(currentStatus.stage);
 
         if (currentStatus.status === "complete") {
 
-          const investigationResult =
+          try {
 
-            getInvestigationResult(investigationId);
+            const investigationResult =
+              getInvestigationResult(investigationId);
 
-          setResult(investigationResult);
+            setResult(investigationResult);
 
-          setStatus("complete");
+            setStatus("complete");
 
-          clearInterval(interval);
+            clearInterval(interval);
+
+          } catch (resultError) {
+
+            console.log(
+              "Backend complete, waiting for result...",
+              resultError
+            );
+
+          }
 
         }
 
       } catch (caughtError) {
 
-        console.error(caughtError);
+        console.error("Investigation status error:", caughtError);
 
         setError(caughtError.message);
 
@@ -4112,29 +4120,15 @@ function FinalResult({
 
       : "NORMAL";
 
-  const pathStatusLabel =
+ const pathStatusLabel =
+!pathComparison || !pathComparison.status
+? "UNKNOWN"
+: pathComparison.status === "no_baseline"
+? "BASELINE ESTABLISHED"
+: pathComparison.status
+.replaceAll("_", " ")
+.toUpperCase();
 
-    !pathComparison
-
-      ? "UNKNOWN"
-
-      : pathComparison.status ===
-
-        "no_baseline"
-
-      ? "BASELINE ESTABLISHED"
-
-      : pathComparison.status
-
-          .replaceAll(
-
-            "_",
-
-            " "
-
-          )
-
-          .toUpperCase();
 
   const httpStatusLabel =
 

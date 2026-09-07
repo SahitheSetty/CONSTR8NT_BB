@@ -21,6 +21,7 @@ export function startInvestigation(target) {
   const investigationId = crypto.randomUUID();
 
   const investigation = {
+    id: investigationId,
     target,
     status: "starting",
     stageIndex: 0,
@@ -95,6 +96,10 @@ export function getInvestigationResult(investigationId) {
 
   if (!investigation) {
     throw new Error("Investigation not found");
+  }
+
+  if (!investigation.result) {
+    throw new Error("Investigation result is not ready");
   }
 
   return investigation.result;

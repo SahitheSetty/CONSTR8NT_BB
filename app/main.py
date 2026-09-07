@@ -40,6 +40,7 @@ def root():
     return {
         "service": "BLACK BOX Network Investigation System",
         "status": "running",
+        "pipeline": "Person 1 -> Person 2 -> Adapter -> Bayesian Engine"
     }
 
 
