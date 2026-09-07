@@ -1,4 +1,4 @@
-import mockInvestigations from "../data/mockInvestigation";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
 const investigations = new Map();
 
@@ -11,31 +11,64 @@ const investigationStages = [
   "complete",
 ];
 
-const scenarios = [
-  "healthy",
-  "pathDegradation",
-  "highLatency",
-  "packetLoss",
-];
+// The backend runs the whole pipeline synchronously and returns once, so
+// this timer just advances the on-screen stage indicator while the real
+// request (which can take a while -- traceroute alone can run for
+// several seconds per hop) is in flight.
+const STAGE_INTERVAL_MS = 900;
 
 export function startInvestigation(target) {
   const investigationId = crypto.randomUUID();
 
-  const scenarioName = chooseScenario(target);
-  const scenario = mockInvestigations[scenarioName];
-
   const investigation = {
-    ...scenario,
-    id: investigationId,
     target,
     status: "starting",
     stageIndex: 0,
+    result: null,
+    error: null,
     createdAt: new Date().toISOString(),
   };
 
   investigations.set(investigationId, investigation);
 
-  simulateInvestigation(investigationId);
+  const stageTimer = setInterval(() => {
+    if (
+      investigation.status === "complete" ||
+      investigation.status === "error"
+    ) {
+      clearInterval(stageTimer);
+      return;
+    }
+
+    if (investigation.stageIndex < investigationStages.length - 2) {
+      investigation.stageIndex += 1;
+      investigation.status = investigationStages[investigation.stageIndex];
+    }
+  }, STAGE_INTERVAL_MS);
+
+  fetch(`${API_BASE}/diagnose`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ target }),
+  })
+    .then(async (response) => {
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.detail || `Request failed with status ${response.status}`);
+      }
+      return response.json();
+    })
+    .then((result) => {
+      investigation.result = result;
+      investigation.stageIndex = investigationStages.length - 1;
+      investigation.status = "complete";
+      clearInterval(stageTimer);
+    })
+    .catch((error) => {
+      investigation.error = error.message;
+      investigation.status = "error";
+      clearInterval(stageTimer);
+    });
 
   return investigationId;
 }
@@ -45,6 +78,10 @@ export function getInvestigationStatus(investigationId) {
 
   if (!investigation) {
     throw new Error("Investigation not found");
+  }
+
+  if (investigation.status === "error") {
+    throw new Error(investigation.error || "Investigation failed");
   }
 
   return {
@@ -60,44 +97,5 @@ export function getInvestigationResult(investigationId) {
     throw new Error("Investigation not found");
   }
 
-  return investigation;
-}
-
-function chooseScenario(target) {
-  const normalizedTarget = target.toLowerCase();
-
-  if (normalizedTarget === "github.com") {
-    return "pathDegradation";
-  }
-
-  if (normalizedTarget === "google.com") {
-    return "highLatency";
-  }
-
-  if (normalizedTarget === "8.8.8.8") {
-    return "packetLoss";
-  }
-
-  return scenarios[Math.floor(Math.random() * scenarios.length)];
-}
-
-function simulateInvestigation(investigationId) {
-  const interval = setInterval(() => {
-    const investigation = investigations.get(investigationId);
-
-    if (!investigation) {
-      clearInterval(interval);
-      return;
-    }
-
-    if (investigation.stageIndex >= investigationStages.length - 1) {
-      investigation.status = "complete";
-      clearInterval(interval);
-      return;
-    }
-
-    investigation.stageIndex += 1;
-    investigation.status =
-      investigationStages[investigation.stageIndex];
-  }, 1500);
+  return investigation.result;
 }

@@ -48,4 +48,11 @@ Target
             |
             v
         Person 2
-        
+```
+
+## API
+
+- `POST /investigate` -- Person 1 raw collection only (DNS, HTTP, TCP, TLS, traceroute), returned as-is.
+- `POST /diagnose` -- the full pipeline: collect, compare against the previous run of the same target (Person 2), then run the Bayesian diagnosis engine (Person 3) and return one combined result shaped for the frontend. This is what the React app calls.
+
+Both take `{"target": "<domain or IP>"}`.
