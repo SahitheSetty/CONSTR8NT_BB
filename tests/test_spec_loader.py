@@ -70,3 +70,22 @@ def test_priors_not_summing_to_one_raises(tmp_path):
 
     with pytest.raises(AssertionError, match="priors sum to"):
         load_spec(broken)
+
+
+def test_out_of_bounds_prior_raises_even_when_the_sum_is_still_one(tmp_path):
+    # A prior outside [0.01, 0.99] can still be masked by the sum-to-1.0
+    # check alone if another prior compensates for it -- e.g. {-0.3, 1.3,
+    # ...} sums to 1.0 but produces NaN via np.log() instead of failing at
+    # load time. Bounds must be checked per hypothesis, not just in total.
+    import yaml
+
+    raw = yaml.safe_load(REAL_SPEC.read_text())
+    keys = list(raw["hypotheses"])
+    raw["hypotheses"][keys[0]]["prior"] -= 0.3
+    raw["hypotheses"][keys[1]]["prior"] += 0.3
+
+    broken = tmp_path / "spec_out_of_bounds_prior.yaml"
+    broken.write_text(yaml.dump(raw, sort_keys=False))
+
+    with pytest.raises(AssertionError, match=f"hypotheses.{keys[0]}.prior"):
+        load_spec(broken)

@@ -1,4 +1,4 @@
-from app.models import DNSResult, HTTPResult, Hop, InvestigationResult
+from app.models import DNSResult, HTTPResult, Hop, InvestigationResult, TCPResult, TLSResult
 
 
 dns = DNSResult(
@@ -15,6 +15,12 @@ http = HTTPResult(
     error=None
 )
 
+tcp443 = TCPResult(status="open", durationMs=15.2, error=None)
+
+tcp80 = TCPResult(status="open", durationMs=10.4, error=None)
+
+tls = TLSResult(handshake="ok", durationMs=55.3, error=None)
+
 hop = Hop(
     hop=1,
     ip="192.168.1.1",
@@ -30,6 +36,9 @@ result = InvestigationResult(
     investigationId="test123",
     dns=dns,
     http=http,
+    tcp443=tcp443,
+    tcp80=tcp80,
+    tls=tls,
     path=[hop],
     status="completed",
     errors=[]

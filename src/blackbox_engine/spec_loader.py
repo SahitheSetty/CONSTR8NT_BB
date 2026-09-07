@@ -89,6 +89,7 @@ def validate_spec(spec: Spec) -> None:
     hypothesis at fault so a broken hand-filled YAML can be fixed on sight.
     """
     _validate_priors(spec)
+    _validate_prior_bounds(spec)
     _validate_hypothesis_references(spec)
     _validate_probe_symbol_coverage(spec)
     _validate_likelihood_columns(spec)
@@ -101,6 +102,18 @@ def _validate_priors(spec: Spec) -> None:
         f"hypothesis priors sum to {total!r}, expected 1.0 "
         f"(within {_SUM_TOLERANCE}); hypotheses: {sorted(spec.hypotheses)}"
     )
+
+
+def _validate_prior_bounds(spec: Spec) -> None:
+    # A prior summing correctly can still hide an out-of-range (or negative)
+    # value elsewhere in the same sum -- e.g. {-0.3, 1.3, ...} sums to 1.0
+    # but isn't a valid probability anywhere, and silently produces NaN via
+    # np.log() in BeliefState instead of failing at load time.
+    for key, hypothesis in spec.hypotheses.items():
+        assert _PROBABILITY_MIN <= hypothesis.prior <= _PROBABILITY_MAX, (
+            f"hypotheses.{key}.prior = {hypothesis.prior!r} is outside the smoothed "
+            f"range [{_PROBABILITY_MIN}, {_PROBABILITY_MAX}]"
+        )
 
 
 def _validate_hypothesis_references(spec: Spec) -> None:

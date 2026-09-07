@@ -58,7 +58,14 @@ class BeliefState:
         return float(-np.sum(nonzero * np.log2(nonzero)))
 
     def top(self, k: int) -> list[tuple[str, float]]:
-        """The k most probable hypotheses as (name, probability), descending."""
+        """The k most probable hypotheses as (name, probability), descending.
+
+        Ties break by declaration order in hypotheses.yaml (the earlier
+        hypothesis wins) via a stable sort. Sorting ascending and then
+        reversing -- the tempting one-liner -- inverts tie order instead of
+        preserving it, so whichever hypothesis happened to be declared last
+        would silently win every exact tie.
+        """
         probs = self.probs()
-        order = np.argsort(probs)[::-1][:k]
+        order = np.argsort(-probs, kind="stable")[:k]
         return [(self.hypotheses[i], float(probs[i])) for i in order]

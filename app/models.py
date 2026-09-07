@@ -17,6 +17,18 @@ class HTTPResult(BaseModel):
     error: Optional[str] = None
 
 
+class TCPResult(BaseModel):
+    status: Optional[str] = None
+    durationMs: Optional[float] = None
+    error: Optional[str] = None
+
+
+class TLSResult(BaseModel):
+    handshake: Optional[str] = None
+    durationMs: Optional[float] = None
+    error: Optional[str] = None
+
+
 class Hop(BaseModel):
     hop: int
     ip: Optional[str] = None
@@ -33,6 +45,9 @@ class InvestigationResult(BaseModel):
 
     dns: DNSResult
     http: HTTPResult
+    tcp443: TCPResult
+    tcp80: TCPResult
+    tls: TLSResult
     path: list[Hop]
 
     status: str

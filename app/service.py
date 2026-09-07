@@ -3,8 +3,10 @@ from datetime import datetime, timezone
 
 from app.collectors.dns import collect_dns
 from app.collectors.http import collect_http
+from app.collectors.tcp import collect_tcp
+from app.collectors.tls import collect_tls
 from app.collectors.traceroute import collect_traceroute
-from app.models import InvestigationResult
+from app.models import InvestigationResult, TLSResult
 
 
 def investigate_target(target: str) -> InvestigationResult:
@@ -81,6 +83,70 @@ def investigate_target(target: str) -> InvestigationResult:
         )
 
     # ---------------------------------------------------------
+    # TCP COLLECTION
+    # ---------------------------------------------------------
+
+    try:
+        tcp443_result = collect_tcp(target, 443)
+
+        if tcp443_result.status is None and tcp443_result.error:
+            errors.append(
+                f"TCP 443: {tcp443_result.error}"
+            )
+
+    except Exception as e:
+        from app.models import TCPResult
+
+        tcp443_result = TCPResult(status=None, durationMs=None, error=str(e))
+
+        errors.append(
+            f"TCP 443 collector error: {str(e)}"
+        )
+
+    try:
+        tcp80_result = collect_tcp(target, 80)
+
+        if tcp80_result.status is None and tcp80_result.error:
+            errors.append(
+                f"TCP 80: {tcp80_result.error}"
+            )
+
+    except Exception as e:
+        from app.models import TCPResult
+
+        tcp80_result = TCPResult(status=None, durationMs=None, error=str(e))
+
+        errors.append(
+            f"TCP 80 collector error: {str(e)}"
+        )
+
+    # ---------------------------------------------------------
+    # TLS COLLECTION
+    #
+    # Only meaningful once TCP/443 is known open -- otherwise there is
+    # nothing to shake hands with, so we record "not_attempted" rather
+    # than trying (and misreporting a TCP-layer failure as a TLS one).
+    # ---------------------------------------------------------
+
+    if tcp443_result.status == "open":
+        try:
+            tls_result = collect_tls(target)
+
+            if tls_result.handshake is None and tls_result.error:
+                errors.append(
+                    f"TLS: {tls_result.error}"
+                )
+
+        except Exception as e:
+            tls_result = TLSResult(handshake=None, durationMs=None, error=str(e))
+
+            errors.append(
+                f"TLS collector error: {str(e)}"
+            )
+    else:
+        tls_result = TLSResult(handshake="not_attempted", durationMs=None, error=None)
+
+    # ---------------------------------------------------------
     # TRACEROUTE COLLECTION
     # ---------------------------------------------------------
 
@@ -126,6 +192,9 @@ def investigate_target(target: str) -> InvestigationResult:
         investigationId=investigation_id,
         dns=dns_result,
         http=http_result,
+        tcp443=tcp443_result,
+        tcp80=tcp80_result,
+        tls=tls_result,
         path=path,
         status=status,
         errors=errors

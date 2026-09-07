@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import "./App.css";
 import InteractiveBackground from "./components/InteractiveBackground";
@@ -33,6 +33,8 @@ function App() {
 
   const [result, setResult] = useState(null);
 
+  const [error, setError] = useState(null);
+
   const [selectedHop, setSelectedHop] = useState(null);
 
   const handleInvestigate = () => {
@@ -40,6 +42,8 @@ function App() {
     if (!target.trim()) return;
 
     setResult(null);
+
+    setError(null);
 
     setSelectedHop(null);
 
@@ -58,6 +62,8 @@ function App() {
     if (!target.trim()) return;
 
     setResult(null);
+
+    setError(null);
 
     setSelectedHop(null);
 
@@ -79,29 +85,41 @@ function App() {
 
       try {
 
-        const currentStatus =
-
-          getInvestigationStatus(investigationId);
+        const currentStatus = getInvestigationStatus(investigationId);
 
         setStage(currentStatus.stage);
 
         if (currentStatus.status === "complete") {
 
-          const investigationResult =
+          try {
 
-            getInvestigationResult(investigationId);
+            const investigationResult =
+              getInvestigationResult(investigationId);
 
-          setResult(investigationResult);
+            setResult(investigationResult);
 
-          setStatus("complete");
+            setStatus("complete");
 
-          clearInterval(interval);
+            clearInterval(interval);
+
+          } catch (resultError) {
+
+            console.log(
+              "Backend complete, waiting for result...",
+              resultError
+            );
+
+          }
 
         }
 
-      } catch (error) {
+      } catch (caughtError) {
 
-        console.error(error);
+        console.error("Investigation status error:", caughtError);
+
+        setError(caughtError.message);
+
+        setStatus("error");
 
         clearInterval(interval);
 
@@ -112,6 +130,42 @@ function App() {
     return () => clearInterval(interval);
 
   }, [investigationId]);
+
+  if (status === "error") {
+
+    return (
+
+      <ErrorScreen
+
+        target={target}
+
+        message={error}
+
+        onRetry={handleRetest}
+
+        onNewInvestigation={() => {
+
+          setStatus("idle");
+
+          setInvestigationId(null);
+
+          setResult(null);
+
+          setError(null);
+
+          setStage(null);
+
+          setSelectedHop(null);
+
+          setTarget("");
+
+        }}
+
+      />
+
+    );
+
+  }
 
   if (status === "idle") {
 
@@ -171,730 +225,39 @@ function App() {
 
 /* =========================================================
 
-   LIVE INTERACTIVE BACKGROUND
+   ERROR SCREEN
 
 ========================================================= */
 
-function LiveNetworkBackground() {
-
-  const canvasRef = useRef(null);
-
-  const mouseRef = useRef({
-
-    x: null,
-
-    y: null,
-
-  });
-
-  useEffect(() => {
-
-    const canvas = canvasRef.current;
-
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-
-    let width = 0;
-
-    let height = 0;
-
-    let animationFrame;
-
-    const particles = [];
-
-    const particleCount = 110;
-
-    const resize = () => {
-
-      width = window.innerWidth;
-
-      height = window.innerHeight;
-
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-      canvas.width = width * dpr;
-
-      canvas.height = height * dpr;
-
-      canvas.style.width = `${width}px`;
-
-      canvas.style.height = `${height}px`;
-
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    };
-
-    const createParticle = () => ({
-
-      x: Math.random() * width,
-
-      y: Math.random() * height,
-
-      vx: (Math.random() - 0.5) * 0.25,
-
-      vy: (Math.random() - 0.5) * 0.25,
-
-      radius: Math.random() * 1.8 + 0.5,
-
-      alpha: Math.random() * 0.7 + 0.2,
-
-      pulse: Math.random() * Math.PI * 2,
-
-    });
-
-    const initialize = () => {
-
-      particles.length = 0;
-
-      for (let i = 0; i < particleCount; i++) {
-
-        particles.push(createParticle());
-
-      }
-
-    };
-
-    const drawGlow = () => {
-
-      const centerX = width * 0.5;
-
-      const centerY = height * 0.42;
-
-      const gradient = ctx.createRadialGradient(
-
-        centerX,
-
-        centerY,
-
-        20,
-
-        centerX,
-
-        centerY,
-
-        Math.min(width, height) * 0.52
-
-      );
-
-      gradient.addColorStop(0, "rgba(255, 65, 180, 0.12)");
-
-      gradient.addColorStop(0.45, "rgba(180, 30, 130, 0.055)");
-
-      gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
-
-      ctx.fillStyle = gradient;
-
-      ctx.fillRect(0, 0, width, height);
-
-    };
-
-    const drawGlobe = (time) => {
-
-      const cx = width * 0.5;
-
-      const cy = height * 0.40;
-
-      const radius =
-
-        Math.min(width, height) * 0.29;
-
-      ctx.save();
-
-      ctx.translate(cx, cy);
-
-      /*
-
-        Outer globe glow
-
-      */
-
-      const globeGlow = ctx.createRadialGradient(
-
-        0,
-
-        0,
-
-        radius * 0.2,
-
-        0,
-
-        0,
-
-        radius
-
-      );
-
-      globeGlow.addColorStop(
-
-        0,
-
-        "rgba(255, 70, 190, 0.035)"
-
-      );
-
-      globeGlow.addColorStop(
-
-        0.7,
-
-        "rgba(255, 20, 150, 0.025)"
-
-      );
-
-      globeGlow.addColorStop(
-
-        1,
-
-        "rgba(255, 20, 150, 0)"
-
-      );
-
-      ctx.fillStyle = globeGlow;
-
-      ctx.beginPath();
-
-      ctx.arc(0, 0, radius, 0, Math.PI * 2);
-
-      ctx.fill();
-
-      /*
-
-        Globe wireframe
-
-      */
-
-      ctx.strokeStyle =
-
-        "rgba(255, 65, 180, 0.12)";
-
-      ctx.lineWidth = 0.7;
-
-      for (let i = 0; i < 7; i++) {
-
-        const offset =
-
-          Math.sin(time * 0.00025 + i) *
-
-          radius *
-
-          0.08;
-
-        ctx.beginPath();
-
-        ctx.ellipse(
-
-          offset,
-
-          0,
-
-          Math.abs(
-
-            radius *
-
-              Math.sin(
-
-                (i / 7) * Math.PI
-
-              )
-
-          ),
-
-          radius,
-
-          0,
-
-          0,
-
-          Math.PI * 2
-
-        );
-
-        ctx.stroke();
-
-      }
-
-      for (let i = -4; i <= 4; i++) {
-
-        const y =
-
-          (i / 4) * radius * 0.82;
-
-        const curve =
-
-          Math.sqrt(
-
-            Math.max(
-
-              0,
-
-              radius * radius - y * y
-
-            )
-
-          );
-
-        ctx.beginPath();
-
-        ctx.ellipse(
-
-          0,
-
-          y,
-
-          curve,
-
-          radius * 0.13,
-
-          0,
-
-          0,
-
-          Math.PI * 2
-
-        );
-
-        ctx.stroke();
-
-      }
-
-      /*
-
-        Rotating network nodes
-
-      */
-
-      const nodeCount = 38;
-
-      for (let i = 0; i < nodeCount; i++) {
-
-        const angle =
-
-          (i / nodeCount) *
-
-            Math.PI *
-
-            2 +
-
-          time * 0.00008;
-
-        const depth =
-
-          Math.sin(
-
-            angle * 2.7 + i
-
-          );
-
-        const x =
-
-          Math.cos(angle) *
-
-          radius *
-
-          (0.45 + Math.abs(depth) * 0.45);
-
-        const y =
-
-          Math.sin(angle) *
-
-          radius *
-
-          0.75;
-
-        ctx.beginPath();
-
-        ctx.arc(
-
-          x,
-
-          y,
-
-          depth > 0 ? 2 : 1.2,
-
-          0,
-
-          Math.PI * 2
-
-        );
-
-        ctx.fillStyle =
-
-          depth > 0
-
-            ? "rgba(255, 95, 200, 0.75)"
-
-            : "rgba(255, 95, 200, 0.3)";
-
-        ctx.fill();
-
-      }
-
-      ctx.restore();
-
-    };
-
-    const drawParticles = (time) => {
-
-      for (const particle of particles) {
-
-        particle.x += particle.vx;
-
-        particle.y += particle.vy;
-
-        particle.pulse += 0.025;
-
-        if (
-
-          particle.x < -20 ||
-
-          particle.x > width + 20
-
-        ) {
-
-          particle.x =
-
-            Math.random() * width;
-
-        }
-
-        if (
-
-          particle.y < -20 ||
-
-          particle.y > height + 20
-
-        ) {
-
-          particle.y =
-
-            Math.random() * height;
-
-        }
-
-        /*
-
-          Cursor interaction
-
-        */
-
-        if (
-
-          mouseRef.current.x !== null
-
-        ) {
-
-          const dx =
-
-            particle.x -
-
-            mouseRef.current.x;
-
-          const dy =
-
-            particle.y -
-
-            mouseRef.current.y;
-
-          const distance =
-
-            Math.sqrt(dx * dx + dy * dy);
-
-          if (distance < 150) {
-
-            const force =
-
-              (150 - distance) / 150;
-
-            particle.x +=
-
-              (dx / Math.max(distance, 1)) *
-
-              force *
-
-              1.8;
-
-            particle.y +=
-
-              (dy / Math.max(distance, 1)) *
-
-              force *
-
-              1.8;
-
-          }
-
-        }
-
-        const pulse =
-
-          Math.sin(
-
-            particle.pulse + time * 0.001
-
-          ) *
-
-          0.25;
-
-        ctx.beginPath();
-
-        ctx.arc(
-
-          particle.x,
-
-          particle.y,
-
-          particle.radius + pulse,
-
-          0,
-
-          Math.PI * 2
-
-        );
-
-        ctx.fillStyle = `rgba(255, 90, 190, ${
-
-          particle.alpha
-
-        })`;
-
-        ctx.fill();
-
-      }
-
-    };
-
-    const drawConnections = () => {
-
-      const connectionDistance = 125;
-
-      for (
-
-        let i = 0;
-
-        i < particles.length;
-
-        i++
-
-      ) {
-
-        for (
-
-          let j = i + 1;
-
-          j < particles.length;
-
-          j++
-
-        ) {
-
-          const a = particles[i];
-
-          const b = particles[j];
-
-          const dx = a.x - b.x;
-
-          const dy = a.y - b.y;
-
-          const distance =
-
-            Math.sqrt(dx * dx + dy * dy);
-
-          if (
-
-            distance <
-
-            connectionDistance
-
-          ) {
-
-            const opacity =
-
-              (1 -
-
-                distance /
-
-                  connectionDistance) *
-
-              0.18;
-
-            ctx.beginPath();
-
-            ctx.moveTo(
-
-              a.x,
-
-              a.y
-
-            );
-
-            ctx.lineTo(
-
-              b.x,
-
-              b.y
-
-            );
-
-            ctx.strokeStyle = `rgba(
-
-              255,
-
-              75,
-
-              185,
-
-              ${opacity}
-
-            )`;
-
-            ctx.lineWidth = 0.6;
-
-            ctx.stroke();
-
-          }
-
-        }
-
-      }
-
-    };
-
-    const animate = (time) => {
-
-      ctx.clearRect(
-
-        0,
-
-        0,
-
-        width,
-
-        height
-
-      );
-
-      drawGlow();
-
-      drawGlobe(time);
-
-      drawConnections();
-
-      drawParticles(time);
-
-      animationFrame =
-
-        requestAnimationFrame(
-
-          animate
-
-        );
-
-    };
-
-    const handleMouseMove = (event) => {
-
-      mouseRef.current.x =
-
-        event.clientX;
-
-      mouseRef.current.y =
-
-        event.clientY;
-
-    };
-
-    const handleMouseLeave = () => {
-
-      mouseRef.current.x = null;
-
-      mouseRef.current.y = null;
-
-    };
-
-    resize();
-
-    initialize();
-
-    window.addEventListener(
-
-      "resize",
-
-      resize
-
-    );
-
-    window.addEventListener(
-
-      "mousemove",
-
-      handleMouseMove
-
-    );
-
-    window.addEventListener(
-
-      "mouseleave",
-
-      handleMouseLeave
-
-    );
-
-    animationFrame =
-
-      requestAnimationFrame(
-
-        animate
-
-      );
-
-    return () => {
-
-      cancelAnimationFrame(
-
-        animationFrame
-
-      );
-
-      window.removeEventListener(
-
-        "resize",
-
-        resize
-
-      );
-
-      window.removeEventListener(
-
-        "mousemove",
-
-        handleMouseMove
-
-      );
-
-      window.removeEventListener(
-
-        "mouseleave",
-
-        handleMouseLeave
-
-      );
-
-    };
-
-  }, []);
-
+function ErrorScreen({ target, message, onRetry, onNewInvestigation }) {
   return (
+    <main className="investigation-screen">
+      <header className="target-bar">
+        <div>
+          <div className="system-label">BLACK BOX / INVESTIGATION</div>
+          <div className="target-name">{target}</div>
+        </div>
+        <div className="target-status">INVESTIGATION FAILED</div>
+      </header>
 
-    <canvas
-
-      ref={canvasRef}
-
-      className="network-background-canvas"
-
-    />
-
+      <section className="result-preview">
+        <div className="section-heading">
+          <span>!</span>
+          <h2>INVESTIGATION FAILED</h2>
+        </div>
+        <div className="analysis-empty">
+          <h3>COULD NOT COMPLETE INVESTIGATION</h3>
+          <p>{message || "The investigation could not be completed. The backend service may be unreachable."}</p>
+        </div>
+        <div className="final-result-actions">
+          <button className="retest-button" onClick={onRetry}>
+            RETRY
+          </button>
+          <button onClick={onNewInvestigation}>NEW INVESTIGATION</button>
+        </div>
+      </section>
+    </main>
   );
-
 }
 
 /* =========================================================
@@ -3097,7 +2460,11 @@ function PerformanceMetric({
 
   const percentage =
 
-    previous !== 0
+    typeof previous === "number" &&
+
+    previous !== 0 &&
+
+    typeof difference === "number"
 
       ? Math.round(
 
@@ -3121,9 +2488,9 @@ function PerformanceMetric({
 
         <strong>
 
-          {previous}
+          {previous ?? "—"}
 
-          {unit}
+          {previous != null && unit}
 
         </strong>
 
@@ -3131,33 +2498,39 @@ function PerformanceMetric({
 
         <strong className="current-value">
 
-          {current}
+          {current ?? "—"}
 
-          {unit}
+          {current != null && unit}
 
         </strong>
 
       </div>
 
-      <div className="metric-difference">
+      {difference != null && (
 
-        +{difference}
+        <div className="metric-difference">
 
-        {unit}
+          {difference > 0 ? "+" : ""}
 
-        {percentage !== 0 && (
+          {difference}
 
-          <span>
+          {unit}
 
-            {" "}
+          {percentage !== 0 && (
 
-            (+{percentage}%)
+            <span>
 
-          </span>
+              {" "}
 
-        )}
+              ({percentage > 0 ? "+" : ""}{percentage}%)
 
-      </div>
+            </span>
+
+          )}
+
+        </div>
+
+      )}
 
     </div>
 
@@ -4757,29 +4130,15 @@ function FinalResult({
 
       : "NORMAL";
 
-  const pathStatusLabel =
+ const pathStatusLabel =
+!pathComparison || !pathComparison.status
+? "UNKNOWN"
+: pathComparison.status === "no_baseline"
+? "BASELINE ESTABLISHED"
+: pathComparison.status
+.replaceAll("_", " ")
+.toUpperCase();
 
-    !pathComparison
-
-      ? "UNKNOWN"
-
-      : pathComparison.status ===
-
-        "no_baseline"
-
-      ? "BASELINE ESTABLISHED"
-
-      : pathComparison.status
-
-          .replaceAll(
-
-            "_",
-
-            " "
-
-          )
-
-          .toUpperCase();
 
   const httpStatusLabel =
 
@@ -5151,7 +4510,11 @@ function FinalMetric({
 
   const percentage =
 
-    previous !== 0
+    typeof previous === "number" &&
+
+    previous !== 0 &&
+
+    typeof difference === "number"
 
       ? Math.round(
 
@@ -5175,9 +4538,9 @@ function FinalMetric({
 
         <strong>
 
-          {previous}
+          {previous ?? "—"}
 
-          {unit}
+          {previous != null && unit}
 
         </strong>
 
@@ -5185,15 +4548,15 @@ function FinalMetric({
 
         <strong className="current-value">
 
-          {current}
+          {current ?? "—"}
 
-          {unit}
+          {current != null && unit}
 
         </strong>
 
       </div>
 
-      {difference !== 0 && (
+      {difference != null && difference !== 0 && (
 
         <div className="metric-difference">
 

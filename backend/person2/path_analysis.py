@@ -1,45 +1,53 @@
+def _normalize_hop(hop):
+    if hasattr(hop, "model_dump"):
+        return hop.model_dump()
+
+    if hasattr(hop, "dict"):
+        return hop.dict()
+
+    return hop
+
+
 def compare_paths(previous_data, current_data):
 
-    previous_path = previous_data["path"]
-    current_path = current_data["path"]
+    previous_path = [
+        _normalize_hop(hop)
+        for hop in previous_data["path"]
+    ]
 
-    # Get hop numbers
-    previous_hops = {hop["hop"] for hop in previous_path}
-    current_hops = {hop["hop"] for hop in current_path}
+    current_path = [
+        _normalize_hop(hop)
+        for hop in current_data["path"]
+    ]
 
-    # Store detected changes and anomalies
+    previous_hops = {
+        hop["hop"]
+        for hop in previous_path
+    }
+
+    current_hops = {
+        hop["hop"]
+        for hop in current_path
+    }
+
     changes = []
     anomalies = []
-
-    # ==================================================
-    # 1. ADDED HOPS
-    # ==================================================
 
     added_hops = current_hops - previous_hops
 
     for hop_number in added_hops:
-
         changes.append({
             "type": "ADDED_HOP",
             "hop": hop_number
         })
 
-    # ==================================================
-    # 2. REMOVED HOPS
-    # ==================================================
-
     removed_hops = previous_hops - current_hops
 
     for hop_number in removed_hops:
-
         changes.append({
             "type": "REMOVED_HOP",
             "hop": hop_number
         })
-
-    # ==================================================
-    # 3. COMPARE COMMON HOPS
-    # ==================================================
 
     common_hops = current_hops & previous_hops
 
@@ -55,10 +63,6 @@ def compare_paths(previous_data, current_data):
             if hop["hop"] == hop_number
         )
 
-        # ==================================================
-        # 3A. IP CHANGE
-        # ==================================================
-
         previous_ip = previous_hop.get("ip")
         current_ip = current_hop.get("ip")
 
@@ -67,17 +71,12 @@ def compare_paths(previous_data, current_data):
             and current_ip is not None
             and previous_ip != current_ip
         ):
-
             changes.append({
                 "type": "IP_CHANGED",
                 "hop": hop_number,
                 "previousIp": previous_ip,
                 "currentIp": current_ip
             })
-
-        # ==================================================
-        # 3B. HOSTNAME CHANGE
-        # ==================================================
 
         previous_hostname = previous_hop.get("hostname")
         current_hostname = current_hop.get("hostname")
@@ -87,7 +86,6 @@ def compare_paths(previous_data, current_data):
             and current_hostname is not None
             and previous_hostname != current_hostname
         ):
-
             changes.append({
                 "type": "HOSTNAME_CHANGED",
                 "hop": hop_number,
@@ -95,24 +93,16 @@ def compare_paths(previous_data, current_data):
                 "currentHostname": current_hostname
             })
 
-        # ==================================================
-        # 3C. RTT / LATENCY CHANGE
-        # ==================================================
-
         previous_rtt = previous_hop.get("rttMs")
         current_rtt = current_hop.get("rttMs")
 
-        # Only calculate if both values were actually measured
         if (
             previous_rtt is not None
             and current_rtt is not None
         ):
-
             rtt_delta = current_rtt - previous_rtt
 
-            # 50 ms or more increase = latency spike
             if rtt_delta >= 50:
-
                 anomalies.append({
                     "hop": hop_number,
                     "type": "LATENCY_SPIKE",
@@ -121,27 +111,21 @@ def compare_paths(previous_data, current_data):
                     "rttDeltaMs": rtt_delta
                 })
 
-        # ==================================================
-        # 3D. PACKET LOSS CHANGE
-        # ==================================================
+        previous_loss = previous_hop.get(
+            "packetLossPercent"
+        )
 
-        previous_loss = previous_hop.get("packetLossPercent")
-        current_loss = current_hop.get("packetLossPercent")
-
-        # IMPORTANT:
-        # None means the value was not measured.
-        # We must NOT treat None as 0.
+        current_loss = current_hop.get(
+            "packetLossPercent"
+        )
 
         if (
             previous_loss is not None
             and current_loss is not None
         ):
-
             loss_delta = current_loss - previous_loss
 
-            # 10 percentage points or more = packet loss spike
             if loss_delta >= 10:
-
                 anomalies.append({
                     "hop": hop_number,
                     "type": "PACKET_LOSS_SPIKE",
@@ -149,10 +133,6 @@ def compare_paths(previous_data, current_data):
                     "currentPacketLossPercent": current_loss,
                     "packetLossDeltaPercent": loss_delta
                 })
-
-    # ==================================================
-    # 4. FINAL PERSON 2 OUTPUT
-    # ==================================================
 
     result = {
         "investigationId": current_data.get("investigationId"),
@@ -165,21 +145,12 @@ def compare_paths(previous_data, current_data):
     return result
 
 
-# ==================================================
-# TEST DATA
-# ==================================================
-
 if __name__ == "__main__":
-
-    # ----------------------------------------------
-    # PREVIOUS INVESTIGATION
-    # ----------------------------------------------
 
     previous = {
         "target": "github.com",
         "timestamp": "2026-09-06T10:00:00Z",
         "investigationId": "old123",
-
         "path": [
             {
                 "hop": 1,
@@ -189,7 +160,6 @@ if __name__ == "__main__":
                 "packetLossPercent": 0,
                 "error": None
             },
-
             {
                 "hop": 2,
                 "ip": "10.0.0.1",
@@ -201,16 +171,10 @@ if __name__ == "__main__":
         ]
     }
 
-
-    # ----------------------------------------------
-    # CURRENT INVESTIGATION
-    # ----------------------------------------------
-
     current = {
         "target": "github.com",
         "timestamp": "2026-09-06T10:30:00Z",
         "investigationId": "new456",
-
         "path": [
             {
                 "hop": 1,
@@ -220,7 +184,6 @@ if __name__ == "__main__":
                 "packetLossPercent": 0,
                 "error": None
             },
-
             {
                 "hop": 2,
                 "ip": "20.0.0.1",
@@ -229,7 +192,6 @@ if __name__ == "__main__":
                 "packetLossPercent": 14,
                 "error": None
             },
-
             {
                 "hop": 3,
                 "ip": "20.30.40.50",
@@ -240,11 +202,6 @@ if __name__ == "__main__":
             }
         ]
     }
-
-
-    # ----------------------------------------------
-    # RUN PERSON 2 ANALYSIS
-    # ----------------------------------------------
 
     result = compare_paths(previous, current)
 

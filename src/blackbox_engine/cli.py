@@ -31,6 +31,7 @@ from blackbox_engine.orchestrator import (
 from blackbox_engine.spec_loader import Spec, load_spec
 
 _DEFAULT_SPEC_PATH = Path(__file__).parent / "hypotheses.yaml"
+_DEFAULT_REPLAY_TARGET = "unknown-target"
 _BAR_WIDTH = 30
 _SLOW_DELAY_S = 1.5
 
@@ -173,12 +174,36 @@ def _build_probe_runner(args: argparse.Namespace):
     return ReplayMock(observations)
 
 
+def _resolve_target(args: argparse.Namespace) -> str:
+    """Fill in a sensible target when the positional arg was omitted.
+
+    --scenario mode never looks target up (ScenarioMock ignores it -- see
+    _build_probe_runner), so it's only ever used for display; default to a
+    label naming the scenario. --replay mode has a real target sitting in
+    the replay file's own p1_raw, so prefer that over a generic fallback.
+    """
+    if args.target:
+        return args.target
+    if args.scenario is not None:
+        return f"demo-{args.scenario}"
+
+    raw = json.loads(Path(args.replay).read_text())
+    target = raw.get("p1_raw", {}).get("target")
+    return target if isinstance(target, str) and target else _DEFAULT_REPLAY_TARGET
+
+
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="blackbox",
         description="Run a BLACK BOX diagnosis investigation with a live rich terminal UI.",
     )
-    parser.add_argument("target", help="the domain/host being investigated")
+    parser.add_argument(
+        "target",
+        nargs="?",
+        default=None,
+        help="the domain/host being investigated; optional -- defaults to the scenario "
+        "name in --scenario mode, or the replay file's own p1_raw.target in --replay mode",
+    )
 
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument(
@@ -209,8 +234,9 @@ async def _main_async(argv: list[str] | None = None) -> int:
 
     spec = load_spec(args.spec)
     probe_runner = _build_probe_runner(args)
+    target = _resolve_target(args)
     investigation = Investigation(
-        args.target, spec, probe_runner, budget_s=args.budget, threshold=args.threshold
+        target, spec, probe_runner, budget_s=args.budget, threshold=args.threshold
     )
 
     verdict = await _run_investigation(investigation, spec, console, args.slow)
@@ -220,7 +246,23 @@ async def _main_async(argv: list[str] | None = None) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    return asyncio.run(_main_async(argv))
+    # A real failure here (bad --spec/--replay path, malformed JSON/YAML, an
+    # upstream shape the adapter can't answer) must never dump a raw
+    # traceback mid-demo -- cli.py is the explicit backup plan if the React
+    # frontend or venue wifi dies, so it has to fail *legibly* in front of
+    # an audience. SystemExit/KeyboardInterrupt aren't Exception subclasses,
+    # so argparse's own usage errors and Ctrl-C still behave normally.
+    try:
+        return asyncio.run(_main_async(argv))
+    except Exception as exc:  # noqa: BLE001 -- outermost boundary: re-displayed below, not swallowed
+        Console(stderr=True).print(
+            Panel(
+                f"[bold red]{type(exc).__name__}:[/bold red] {exc}",
+                title="investigation failed",
+                border_style="red",
+            )
+        )
+        return 1
 
 
 if __name__ == "__main__":
