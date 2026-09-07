@@ -349,6 +349,62 @@ def _build_timeline(events: list[Any]) -> list[dict[str, Any]]:
     return timeline
 
 
+def _is_healthy(current: InvestigationResult, anomalies: list[dict[str, Any]]) -> bool:
+    """True when Person 1 measured no failure signal anywhere.
+
+    The Bayesian engine's 12 hypotheses all assume *something* is broken --
+    there's no "target is fine" hypothesis among them, and several of its
+    likelihood rows are intentionally tied on a clean reading (see
+    hypotheses.yaml's per-probe tables), so a genuinely healthy target has
+    no reliable winner for the engine to pick. Route those cases around the
+    engine entirely rather than force one of the 12 failure labels onto a
+    site that isn't failing.
+    """
+    if anomalies:
+        return False
+    if not current.dns.resolved:
+        return False
+    if not current.http.reachable or current.http.status is None or not (200 <= current.http.status < 400):
+        return False
+    if current.tcp443.status not in (None, "open") or current.tcp80.status not in (None, "open"):
+        return False
+    if current.tls.handshake not in (None, "ok"):
+        return False
+    return True
+
+
+def _no_issues_report(current: InvestigationResult) -> tuple[dict[str, Any], list[dict[str, Any]], list[str], list[dict[str, Any]]]:
+    """Build the diagnosis/hypotheses/evidence/timeline fields for a healthy target."""
+    evidence = ['dns_resolution was observed as "ok".']
+    if current.tcp443.status:
+        evidence.append(f'tcp_443 was observed as "{current.tcp443.status}".')
+    if current.tcp80.status:
+        evidence.append(f'tcp_80 was observed as "{current.tcp80.status}".')
+    if current.tls.handshake:
+        evidence.append(f'tls_handshake was observed as "{current.tls.handshake}".')
+    if current.http.status is not None:
+        evidence.append(f'http_status was observed as "{current.http.status}".')
+    evidence.append("No path, latency, or packet-loss anomalies were detected.")
+
+    diagnosis = {
+        "probableCause": "No issues detected",
+        "confidence": "high",
+        "supportingEvidence": evidence,
+        "alternativeHypotheses": [],
+    }
+    hypotheses = [{
+        "type": "Inference",
+        "hypothesis": "No issues detected",
+        "confidence": "high",
+        "reason": "DNS, TCP, TLS, and HTTP all completed normally with no path or performance anomalies.",
+    }]
+    timeline = [
+        {"event": "Investigation started", "status": "completed"},
+        {"event": "All checks passed -- no issues detected", "status": "completed"},
+    ]
+    return diagnosis, hypotheses, evidence, timeline
+
+
 async def run_diagnosis(
     spec: Spec,
     baseline: InvestigationResult | None,
@@ -359,26 +415,17 @@ async def run_diagnosis(
     Returns the combined result already shaped for the frontend
     (see src/data/mockInvestigation.js for the target shape). The
     diagnosis/hypotheses/evidence fields come from Person 3's own
-    exporter.export_investigation(), not reimplemented here.
+    exporter.export_investigation(), not reimplemented here -- except when
+    the target is healthy, in which case the engine is skipped (see
+    _is_healthy).
     """
     person2_result = None
     if baseline is not None:
         person2_result = compare_paths(baseline.model_dump(), current.model_dump())
 
-    p1_raw = normalize_for_adapter(current)
-    p2_for_adapter = build_p2_for_adapter(baseline, current, person2_result)
-
-    probe_runner = LiveProbeRunner(p1_raw, p2_for_adapter)
-    investigation = Investigation(current.target, spec, probe_runner)
-
-    events = [event async for event in investigation.run()]
-    verdict = events[-1]
-    assert isinstance(verdict, Verdict)
-
-    exported = export_investigation(events, spec)
     anomalies = _build_anomalies(current, person2_result)
 
-    return {
+    shared = {
         "id": current.investigationId,
         "target": current.target,
         "timestamp": current.timestamp,
@@ -398,6 +445,33 @@ async def run_diagnosis(
         "pathComparison": _build_path_comparison(baseline, current, person2_result),
         "performanceComparison": _build_performance_comparison(baseline, current),
         "anomalies": anomalies,
+    }
+
+    if _is_healthy(current, anomalies):
+        diagnosis, hypotheses, evidence, timeline = _no_issues_report(current)
+        return {
+            **shared,
+            "evidence": evidence,
+            "hypotheses": hypotheses,
+            "diagnosis": diagnosis,
+            "reasoningTrace": [],
+            "timeline": timeline,
+        }
+
+    p1_raw = normalize_for_adapter(current)
+    p2_for_adapter = build_p2_for_adapter(baseline, current, person2_result)
+
+    probe_runner = LiveProbeRunner(p1_raw, p2_for_adapter)
+    investigation = Investigation(current.target, spec, probe_runner)
+
+    events = [event async for event in investigation.run()]
+    verdict = events[-1]
+    assert isinstance(verdict, Verdict)
+
+    exported = export_investigation(events, spec)
+
+    return {
+        **shared,
         "evidence": exported["evidence"],
         "hypotheses": [
             {

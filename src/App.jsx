@@ -2460,7 +2460,11 @@ function PerformanceMetric({
 
   const percentage =
 
-    previous !== 0
+    typeof previous === "number" &&
+
+    previous !== 0 &&
+
+    typeof difference === "number"
 
       ? Math.round(
 
@@ -2484,9 +2488,9 @@ function PerformanceMetric({
 
         <strong>
 
-          {previous}
+          {previous ?? "—"}
 
-          {unit}
+          {previous != null && unit}
 
         </strong>
 
@@ -2494,33 +2498,39 @@ function PerformanceMetric({
 
         <strong className="current-value">
 
-          {current}
+          {current ?? "—"}
 
-          {unit}
+          {current != null && unit}
 
         </strong>
 
       </div>
 
-      <div className="metric-difference">
+      {difference != null && (
 
-        +{difference}
+        <div className="metric-difference">
 
-        {unit}
+          {difference > 0 ? "+" : ""}
 
-        {percentage !== 0 && (
+          {difference}
 
-          <span>
+          {unit}
 
-            {" "}
+          {percentage !== 0 && (
 
-            (+{percentage}%)
+            <span>
 
-          </span>
+              {" "}
 
-        )}
+              ({percentage > 0 ? "+" : ""}{percentage}%)
 
-      </div>
+            </span>
+
+          )}
+
+        </div>
+
+      )}
 
     </div>
 
@@ -4500,7 +4510,11 @@ function FinalMetric({
 
   const percentage =
 
-    previous !== 0
+    typeof previous === "number" &&
+
+    previous !== 0 &&
+
+    typeof difference === "number"
 
       ? Math.round(
 
@@ -4524,9 +4538,9 @@ function FinalMetric({
 
         <strong>
 
-          {previous}
+          {previous ?? "—"}
 
-          {unit}
+          {previous != null && unit}
 
         </strong>
 
@@ -4534,15 +4548,15 @@ function FinalMetric({
 
         <strong className="current-value">
 
-          {current}
+          {current ?? "—"}
 
-          {unit}
+          {current != null && unit}
 
         </strong>
 
       </div>
 
-      {difference !== 0 && (
+      {difference != null && difference !== 0 && (
 
         <div className="metric-difference">
 

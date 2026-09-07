@@ -35,54 +35,54 @@
 
 hypotheses:
   dns_failure:
-    prior: 0.083333
+    prior: 0.0833333333
     label: DNS resolution is failing for the target
     remediation: Check authoritative DNS records, zone file, and resolver configuration.
   auth_ns_down:
-    prior: 0.083333
+    prior: 0.0833333333
     label: The domain's authoritative nameserver is unreachable
     remediation: Contact the registrar/DNS host to check authoritative nameserver health and reachability.
   routing_blackhole:
-    prior: 0.083333
+    prior: 0.0833333333
     label: Network path silently drops traffic before reaching the destination
     remediation: Escalate to the network/transit provider; check for BGP null-routes or ACLs on intermediate
       ASes.
   path_change_degraded:
-    prior: 0.083333
+    prior: 0.0833333333
     label: A recent route change is causing degraded connectivity
     remediation: Compare current and baseline paths; work with the network team to revert or repair the
       new route.
   congestion_loss:
-    prior: 0.083333
+    prior: 0.0833333333
     label: Packet loss caused by congestion along the network path
     remediation: Check for capacity saturation on the path; consider QoS, traffic shaping, or a capacity
       upgrade.
   server_down:
-    prior: 0.083333
+    prior: 0.0833333333
     label: The destination server or service is down
     remediation: Check the server process and host health directly; restart the failed service.
   app_layer_error:
-    prior: 0.083333
+    prior: 0.0833333333
     label: Server is reachable but returning application-level errors
     remediation: Inspect application logs, recent deploys, and upstream dependency health.
   tls_failure:
-    prior: 0.083333
+    prior: 0.0833333333
     label: TLS handshake is failing
     remediation: Check certificate validity, chain completeness, and hostname/SNI configuration.
   waf_or_rate_limited:
-    prior: 0.083333
+    prior: 0.0833333333
     label: Requests are being blocked by a WAF or rate limiter
     remediation: Review WAF/rate-limit rules and allowlist the affected traffic if the block is unintended.
   local_vantage_bad:
-    prior: 0.083333
+    prior: 0.0833333333
     label: The diagnosis vantage point itself has a local network problem
     remediation: Re-run the investigation from a different vantage point/region to rule out a local issue.
   mtu_blackhole:
-    prior: 0.083333
+    prior: 0.0833333333
     label: Path MTU discovery is failing and large packets are being dropped
     remediation: Check PMTUD and ICMP filtering on the path; consider MSS clamping.
   client_local_issue:
-    prior: 0.083337
+    prior: 0.0833333333
     label: The issue is local to the requesting client, not the network path
     remediation: Check client-side firewall, proxy, VPN, and local DNS/hosts file configuration.
 likelihoods:

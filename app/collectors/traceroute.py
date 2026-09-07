@@ -1,8 +1,45 @@
+import ipaddress
 import platform
 import re
 import subprocess
 
 from app.models import Hop
+
+
+def _extract_ip_and_hostname(data: str) -> tuple[str | None, str | None]:
+    """Pull the hop's IP (v4 or v6) and, if present, its resolved hostname.
+
+    tracert/traceroute render a resolved hop as `hostname [ip]` and an
+    unresolved one as a bare address at the end of the line -- in either
+    form the address itself is only ever IPv4- or IPv6-shaped, so validate
+    candidates with `ipaddress` rather than an IPv4-only regex (which
+    silently drops every hop when the trace runs over IPv6).
+    """
+    bracket_match = re.search(r"\[([0-9A-Fa-f:.]+)\]", data)
+    if bracket_match:
+        candidate = bracket_match.group(1)
+        try:
+            ipaddress.ip_address(candidate)
+        except ValueError:
+            return None, None
+
+        hostname_match = re.search(
+            r"([A-Za-z0-9][A-Za-z0-9.\-_]+)\s+\[" + re.escape(candidate) + r"\]",
+            data,
+        )
+        return candidate, (hostname_match.group(1) if hostname_match else None)
+
+    # No brackets: Windows puts the bare address last, Unix -n puts it
+    # first (before the RTT samples) -- scan every token rather than
+    # assume a position.
+    for token in data.split():
+        try:
+            ipaddress.ip_address(token)
+            return token, None
+        except ValueError:
+            continue
+
+    return None, None
 
 
 def collect_traceroute(target: str) -> list[Hop]:
@@ -120,29 +157,11 @@ def parse_windows_tracert(output: str) -> list[Hop]:
 
             continue
 
-        # Extract IP address
-        ip_match = re.search(
-            r"\b(\d{1,3}(?:\.\d{1,3}){3})\b",
-            data
-        )
+        # Extract IP address (v4 or v6) and hostname, if resolved
+        ip, hostname = _extract_ip_and_hostname(data)
 
-        if not ip_match:
+        if ip is None:
             continue
-
-        ip = ip_match.group(1)
-
-        # Extract hostname
-        hostname = None
-
-        hostname_match = re.search(
-            r"([A-Za-z0-9][A-Za-z0-9.\-_]+)\s+\["
-            + re.escape(ip)
-            + r"\]",
-            data
-        )
-
-        if hostname_match:
-            hostname = hostname_match.group(1)
 
         # Extract RTT values
         rtt_values = re.findall(
@@ -214,11 +233,11 @@ def parse_unix_traceroute(output: str) -> list[Hop]:
         hop_number = int(match.group(1))
         data = match.group(2)
 
+        # Extract IP (v4 or v6); -n mode never resolves hostnames
+        ip, _hostname = _extract_ip_and_hostname(data)
+
         # No response
-        if "*" in data and not re.search(
-            r"\d{1,3}(?:\.\d{1,3}){3}",
-            data
-        ):
+        if "*" in data and ip is None:
 
             hops.append(
                 Hop(
@@ -233,16 +252,8 @@ def parse_unix_traceroute(output: str) -> list[Hop]:
 
             continue
 
-        # Extract IP
-        ip_match = re.search(
-            r"\b(\d{1,3}(?:\.\d{1,3}){3})\b",
-            data
-        )
-
-        if not ip_match:
+        if ip is None:
             continue
-
-        ip = ip_match.group(1)
 
         # Extract RTT values
         rtt_values = re.findall(
